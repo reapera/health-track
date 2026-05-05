@@ -6,7 +6,7 @@ import CalorieChart from "@/components/CalorieChart";
 import StepsChart from "@/components/StepsChart";
 import WorkoutList from "@/components/WorkoutList";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const start = daysAgo(13);

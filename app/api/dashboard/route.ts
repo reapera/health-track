@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchFoodLog, fetchStepsLog, fetchWeightLog, fetchWorkoutLog } from "@/lib/notion";
 import { buildDashboard, daysAgo } from "@/lib/utils";
 
-export const revalidate = 300; // revalidate every 5 minutes
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
