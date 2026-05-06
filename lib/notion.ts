@@ -50,8 +50,8 @@ export async function checkToken(): Promise<{ ok: boolean; detail: string }> {
 export async function checkConnections(): Promise<Record<string, "ok" | string>> {
   async function probe(id: string): Promise<"ok" | string> {
     try {
-      await notion.dataSources.query({
-        data_source_id: id,
+      await notion.databases.query({
+        database_id: id,
         filter: { property: "Date", date: { on_or_after: "2099-01-01" } },
         sorts: [],
       });
@@ -69,9 +69,9 @@ export async function checkConnections(): Promise<Record<string, "ok" | string>>
   return { "Weight Log": weight, "Food Log": food, "Workout Log": workout, "Steps Log": steps };
 }
 
-async function queryDB(dataSourceId: string, startDate: string): Promise<FullEntry[]> {
-  const response = await notion.dataSources.query({
-    data_source_id: dataSourceId,
+async function queryDB(databaseId: string, startDate: string): Promise<FullEntry[]> {
+  const response = await notion.databases.query({
+    database_id: databaseId,
     filter: {
       property: "Date",
       date: { on_or_after: startDate },
