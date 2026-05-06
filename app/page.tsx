@@ -1,4 +1,4 @@
-import { checkToken, fetchFoodLog, fetchStepsLog, fetchWeightLog, fetchWorkoutLog } from "@/lib/notion";
+import { checkConnections, checkToken, fetchFoodLog, fetchStepsLog, fetchWeightLog, fetchWorkoutLog } from "@/lib/notion";
 import { buildDashboard, daysAgo } from "@/lib/utils";
 import TodaySnapshot from "@/components/TodaySnapshot";
 import WeightChart from "@/components/WeightChart";
@@ -44,7 +44,15 @@ function SetupError({ missing }: { missing: string[] }) {
   );
 }
 
-function FetchError({ message, token }: { message: string; token: { ok: boolean; detail: string } }) {
+function FetchError({
+  message,
+  token,
+  connections,
+}: {
+  message: string;
+  token: { ok: boolean; detail: string };
+  connections: Record<string, "ok" | string>;
+}) {
   return (
     <main className="min-h-screen bg-gray-950 text-white flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-gray-900 border border-red-500/40 rounded-2xl p-8 flex flex-col gap-5">
@@ -65,11 +73,26 @@ function FetchError({ message, token }: { message: string; token: { ok: boolean;
           </div>
         </div>
 
-        {token.ok && (
-          <p className="text-gray-400 text-sm leading-relaxed">
-            Token is valid but a database failed. Open each health database in Notion → <span className="text-gray-200">⋯ menu → Connections</span> and make sure OpenClaw is added.
-          </p>
-        )}
+        <div className="flex flex-col gap-2">
+          <p className="text-gray-400 text-xs uppercase tracking-wide font-semibold">Database connections</p>
+          {Object.entries(connections).map(([name, status]) => (
+            <div key={name} className="flex items-start gap-3 bg-gray-800 rounded-lg px-3 py-2">
+              {status === "ok"
+                ? <span className="text-green-400 mt-0.5">✓</span>
+                : <span className="text-red-400 mt-0.5">✗</span>}
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="text-sm text-gray-200">{name}</span>
+                {status !== "ok" && (
+                  <span className="text-xs text-red-300 break-words">{status}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-gray-400 text-sm leading-relaxed">
+          For any ✗ database, open it in Notion → <span className="text-gray-200">⋯ menu → Connections</span> and add your integration.
+        </p>
 
         <pre className="bg-gray-800 rounded-lg px-3 py-2 text-xs text-red-300 overflow-auto whitespace-pre-wrap">{message}</pre>
       </div>
@@ -94,8 +117,8 @@ export default async function DashboardPage() {
     ]);
     data = buildDashboard(weights, foods, workouts, steps);
   } catch (err) {
-    const token = await checkToken();
-    return <FetchError message={err instanceof Error ? err.message : String(err)} token={token} />;
+    const [token, connections] = await Promise.all([checkToken(), checkConnections()]);
+    return <FetchError message={err instanceof Error ? err.message : String(err)} token={token} connections={connections} />;
   }
 
   return (
