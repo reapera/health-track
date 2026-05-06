@@ -8,13 +8,7 @@ import WorkoutList from "@/components/WorkoutList";
 
 export const dynamic = "force-dynamic";
 
-const REQUIRED_ENV = [
-  "NOTION_TOKEN",
-  "NOTION_WEIGHT_DB",
-  "NOTION_FOOD_DB",
-  "NOTION_WORKOUT_DB",
-  "NOTION_STEPS_DB",
-] as const;
+const REQUIRED_ENV = ["NOTION_TOKEN"] as const;
 
 function SetupError({ missing }: { missing: string[] }) {
   return (
@@ -42,9 +36,8 @@ function SetupError({ missing }: { missing: string[] }) {
         <ol className="text-gray-400 text-sm leading-relaxed list-decimal list-inside space-y-1">
           <li>Go to <span className="text-gray-200">notion.so/my-integrations</span> and create an integration</li>
           <li>Copy the <span className="font-mono text-gray-200">Internal Integration Token</span> → <span className="font-mono text-yellow-300">NOTION_TOKEN</span></li>
-          <li>Copy each database ID from the Notion URL → the four <span className="font-mono text-yellow-300">NOTION_*_DB</span> vars</li>
-          <li>Share each database with the integration inside Notion</li>
-          <li>Add the vars to Vercel and redeploy</li>
+          <li>Share each health database with the integration inside Notion</li>
+          <li>Add <span className="font-mono text-yellow-300">NOTION_TOKEN</span> to Vercel and redeploy</li>
         </ol>
       </div>
     </main>

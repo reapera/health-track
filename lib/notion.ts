@@ -31,6 +31,13 @@ function getSelect(page: FullEntry, key: string): string | null {
   return prop.select.name;
 }
 
+const DB = {
+  weight:  "3570c782-4a59-8139-8000-d8b360d6064a",
+  food:    "3570c782-4a59-81ee-a3d8-da71155f7801",
+  workout: "3570c782-4a59-8141-8842-fce74812fd2e",
+  steps:   "3570c782-4a59-817a-a562-ecd83d8b9876",
+};
+
 async function queryDB(dataSourceId: string, startDate: string): Promise<FullEntry[]> {
   const response = await notion.dataSources.query({
     data_source_id: dataSourceId,
@@ -74,7 +81,7 @@ export interface StepsEntry {
 }
 
 export async function fetchWeightLog(startDate: string): Promise<WeightEntry[]> {
-  const pages = await queryDB(process.env.NOTION_WEIGHT_DB!, startDate);
+  const pages = await queryDB(DB.weight, startDate);
   return pages.map((p) => ({
     date: getDate(p, "Date") ?? "",
     weight: getNumber(p, "Weight (kg)"),
@@ -84,7 +91,7 @@ export async function fetchWeightLog(startDate: string): Promise<WeightEntry[]> 
 }
 
 export async function fetchFoodLog(startDate: string): Promise<FoodEntry[]> {
-  const pages = await queryDB(process.env.NOTION_FOOD_DB!, startDate);
+  const pages = await queryDB(DB.food, startDate);
   return pages.map((p) => ({
     date: getDate(p, "Date") ?? "",
     meal: getSelect(p, "Meal"),
@@ -96,7 +103,7 @@ export async function fetchFoodLog(startDate: string): Promise<FoodEntry[]> {
 }
 
 export async function fetchWorkoutLog(startDate: string): Promise<WorkoutEntry[]> {
-  const pages = await queryDB(process.env.NOTION_WORKOUT_DB!, startDate);
+  const pages = await queryDB(DB.workout, startDate);
   return pages.map((p) => ({
     date: getDate(p, "Date") ?? "",
     level: getText(p, "Level"),
@@ -107,7 +114,7 @@ export async function fetchWorkoutLog(startDate: string): Promise<WorkoutEntry[]
 }
 
 export async function fetchStepsLog(startDate: string): Promise<StepsEntry[]> {
-  const pages = await queryDB(process.env.NOTION_STEPS_DB!, startDate);
+  const pages = await queryDB(DB.steps, startDate);
   return pages.map((p) => ({
     date: getDate(p, "Date") ?? "",
     steps: getNumber(p, "Steps"),
