@@ -89,7 +89,6 @@ export function buildDashboard(
 ): DashboardData {
   const td = today();
   const thisWeekStart = daysAgo(6);
-  const lastWeekStart = daysAgo(13);
 
   // Today's entries
   const todayWeight = weights.filter((w) => w.date === td).at(-1) ?? null;
@@ -104,10 +103,12 @@ export function buildDashboard(
   const thisWeekSteps = steps.filter((s) => s.date >= thisWeekStart && s.date <= td);
   const weekWorkouts = workouts.filter((w) => w.date >= thisWeekStart && w.date <= td);
 
-  // Last week
-  const lastWeekFoods = foods.filter((f) => f.date >= lastWeekStart && f.date < thisWeekStart);
-  const lastWeekSteps = steps.filter((s) => s.date >= lastWeekStart && s.date < thisWeekStart);
-  const lastWeekWeights = weights.filter((w) => w.date >= lastWeekStart && w.date < thisWeekStart);
+  // Previous entries (most recent before today)
+  const prevWeight = weights.filter((w) => w.date < td).at(-1) ?? null;
+  const yesterday = daysAgo(1);
+  const yesterdayFoods = foods.filter((f) => f.date === yesterday);
+  const yesterdayCalories = yesterdayFoods.reduce((s, f) => s + (f.calories ?? 0), 0) || null;
+  const yesterdaySteps = steps.filter((s) => s.date === yesterday).at(-1)?.steps ?? null;
 
   // Weight series (14 days)
   const weightSeries = weights.map((w) => ({
@@ -135,13 +136,6 @@ export function buildDashboard(
     steps: d.value,
   }));
 
-  // Deltas: this week avg vs last week avg
-  const avgCalThis = average(Object.values(dailyCalories(thisWeekFoods)));
-  const avgCalLast = average(Object.values(dailyCalories(lastWeekFoods)));
-  const avgStepsThis = average(thisWeekSteps.map((s) => s.steps ?? 0).filter(Boolean));
-  const avgStepsLast = average(lastWeekSteps.map((s) => s.steps ?? 0).filter(Boolean));
-  const lastWeight = lastWeekWeights.at(-1)?.weight ?? null;
-
   return {
     today: td,
     todayWeight,
@@ -154,9 +148,9 @@ export function buildDashboard(
     stepsSeries,
     weekWorkouts,
     deltas: {
-      weight: delta(todayWeight?.weight ?? null, lastWeight),
-      calories: delta(avgCalThis || null, avgCalLast || null),
-      steps: delta(avgStepsThis || null, avgStepsLast || null),
+      weight: delta(todayWeight?.weight ?? null, prevWeight?.weight ?? null),
+      calories: delta(todayCalories, yesterdayCalories),
+      steps: delta(todaySteps?.steps ?? null, yesterdaySteps),
     },
   };
 }
