@@ -1,4 +1,4 @@
-import { fetchFoodLog, fetchStepsLog, fetchWeightLog, fetchWorkoutLog } from "@/lib/notion";
+import { checkConnections, fetchFoodLog, fetchStepsLog, fetchWeightLog, fetchWorkoutLog } from "@/lib/notion";
 import { buildDashboard, daysAgo } from "@/lib/utils";
 import TodaySnapshot from "@/components/TodaySnapshot";
 import WeightChart from "@/components/WeightChart";
@@ -44,19 +44,38 @@ function SetupError({ missing }: { missing: string[] }) {
   );
 }
 
-function FetchError({ message }: { message: string }) {
+function FetchError({ message, connections }: { message: string; connections: Record<string, "ok" | string> }) {
   return (
     <main className="min-h-screen bg-gray-950 text-white flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-gray-900 border border-red-500/40 rounded-2xl p-8 flex flex-col gap-4">
+      <div className="max-w-md w-full bg-gray-900 border border-red-500/40 rounded-2xl p-8 flex flex-col gap-5">
         <div className="flex items-center gap-3">
           <svg className="w-6 h-6 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
           </svg>
           <h1 className="text-xl font-bold text-red-400">Failed to load dashboard</h1>
         </div>
+
+        <div className="flex flex-col gap-2">
+          <p className="text-gray-400 text-xs uppercase tracking-wide font-semibold">Database connections</p>
+          {Object.entries(connections).map(([name, status]) => (
+            <div key={name} className="flex items-start gap-3 bg-gray-800 rounded-lg px-3 py-2">
+              {status === "ok"
+                ? <span className="text-green-400 mt-0.5">✓</span>
+                : <span className="text-red-400 mt-0.5">✗</span>}
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="text-sm text-gray-200">{name}</span>
+                {status !== "ok" && (
+                  <span className="text-xs text-red-300 break-words">{status}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
         <p className="text-gray-400 text-sm leading-relaxed">
-          Could not fetch data from Notion. Make sure your token is valid and each database has been shared with your integration.
+          For any ✗ database, open it in Notion → <span className="text-gray-200">⋯ menu → Connections</span> and add your integration.
         </p>
+
         <pre className="bg-gray-800 rounded-lg px-3 py-2 text-xs text-red-300 overflow-auto whitespace-pre-wrap">{message}</pre>
       </div>
     </main>
@@ -80,7 +99,8 @@ export default async function DashboardPage() {
     ]);
     data = buildDashboard(weights, foods, workouts, steps);
   } catch (err) {
-    return <FetchError message={err instanceof Error ? err.message : String(err)} />;
+    const connections = await checkConnections();
+    return <FetchError message={err instanceof Error ? err.message : String(err)} connections={connections} />;
   }
 
   return (
