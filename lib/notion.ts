@@ -1,9 +1,19 @@
-import { Client, isFullPage } from "@notionhq/client";
+import { Client } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 
 type FullEntry = PageObjectResponse;
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
+
+const NOTION_API = "https://api.notion.com/v1";
+
+function headers() {
+  return {
+    Authorization: `Bearer ${process.env.NOTION_TOKEN}`,
+    "Notion-Version": "2022-06-28",
+    "Content-Type": "application/json",
+  };
+}
 
 function getText(page: FullEntry, key: string): string {
   const prop = page.properties[key];
@@ -50,35 +60,41 @@ export async function checkToken(): Promise<{ ok: boolean; detail: string }> {
 export async function checkConnections(): Promise<Record<string, "ok" | string>> {
   async function probe(id: string): Promise<"ok" | string> {
     try {
-      await notion.dataSources.query({
-        data_source_id: id,
-        filter: { property: "Date", date: { on_or_after: "2099-01-01" } },
-        sorts: [],
+      const res = await fetch(`${NOTION_API}/databases/${id}/query`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ filter: { property: "Date", date: { on_or_after: "2099-01-01" } } }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        return (body as { message?: string }).message ?? `HTTP ${res.status}`;
+      }
       return "ok";
     } catch (err) {
       return err instanceof Error ? err.message : "error";
     }
   }
   const [weight, food, workout, steps] = await Promise.all([
-    probe(DB.weight),
-    probe(DB.food),
-    probe(DB.workout),
-    probe(DB.steps),
+    probe(DB.weight), probe(DB.food), probe(DB.workout), probe(DB.steps),
   ]);
   return { "Weight Log": weight, "Food Log": food, "Workout Log": workout, "Steps Log": steps };
 }
 
-async function queryDB(dataSourceId: string, startDate: string): Promise<FullEntry[]> {
-  const response = await notion.dataSources.query({
-    data_source_id: dataSourceId,
-    filter: {
-      property: "Date",
-      date: { on_or_after: startDate },
-    },
-    sorts: [{ property: "Date", direction: "ascending" }],
+async function queryDB(databaseId: string, startDate: string): Promise<FullEntry[]> {
+  const res = await fetch(`${NOTION_API}/databases/${databaseId}/query`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      filter: { property: "Date", date: { on_or_after: startDate } },
+      sorts: [{ property: "Date", direction: "ascending" }],
+    }),
   });
-  return response.results.filter(isFullPage);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { message?: string }).message ?? `Notion API error ${res.status}`);
+  }
+  const data = await res.json();
+  return (data.results ?? []).filter((p: FullEntry) => p.object === "page");
 }
 
 export interface WeightEntry {
