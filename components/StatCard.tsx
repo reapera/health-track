@@ -9,9 +9,10 @@ interface Props {
   inverse?: boolean;
   icon: string;
   staleDate?: string | null;
+  deltaLabel?: string;
 }
 
-export default function StatCard({ label, value, unit, delta, deltaUnit, inverse, icon, staleDate }: Props) {
+export default function StatCard({ label, value, unit, delta, deltaUnit, inverse, icon, staleDate, deltaLabel }: Props) {
   const stale = !!staleDate;
   return (
     <div className={`bg-gray-900 rounded-2xl p-5 flex flex-col gap-2 border ${stale ? "border-yellow-500/30" : "border-gray-800"}`}>
@@ -28,7 +29,7 @@ export default function StatCard({ label, value, unit, delta, deltaUnit, inverse
         {value ?? <span className="text-gray-600 text-xl">—</span>}
         {value && unit && <span className={`text-lg ml-1 ${stale ? "text-yellow-500/70" : "text-gray-400"}`}>{unit}</span>}
       </div>
-      <DeltaBadge value={delta ?? null} unit={deltaUnit} inverse={inverse} />
+      <DeltaBadge value={delta ?? null} unit={deltaUnit} inverse={inverse} vsLabel={deltaLabel} />
     </div>
   );
 }

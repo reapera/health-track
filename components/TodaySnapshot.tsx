@@ -2,8 +2,13 @@ import { DashboardData } from "@/lib/utils";
 import StatCard from "./StatCard";
 
 export default function TodaySnapshot({ data }: { data: DashboardData }) {
-  const workoutSummary = (workouts: typeof data.todayWorkouts) =>
-    workouts.length > 0 ? workouts.map((w) => w.exercise || w.level || "Workout").join(", ") : null;
+  const workoutSummary = (workouts: typeof data.todayWorkouts) => {
+    if (!workouts.length) return null;
+    return workouts.map((w) => {
+      const name = w.exercise || w.level || "Workout";
+      return w.reps ? `${name} ×${w.reps}` : name;
+    }).join(", ");
+  };
 
   const weight = data.todayWeight?.weight ?? data.latestWeight?.weight ?? null;
   const weightStale = !data.todayWeight ? data.latestWeight?.date : null;
@@ -30,6 +35,7 @@ export default function TodaySnapshot({ data }: { data: DashboardData }) {
           unit="kg"
           delta={data.deltas.weight}
           deltaUnit=" kg"
+          deltaLabel={data.deltas.weightLabel ?? undefined}
           inverse
           staleDate={weightStale}
         />
@@ -40,6 +46,7 @@ export default function TodaySnapshot({ data }: { data: DashboardData }) {
           unit="kcal"
           delta={data.deltas.calories}
           deltaUnit=" kcal"
+          deltaLabel={data.deltas.caloriesLabel ?? undefined}
           inverse
           staleDate={caloriesStale}
         />

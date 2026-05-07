@@ -80,7 +80,9 @@ export interface DashboardData {
   weekWorkouts: WorkoutEntry[];
   deltas: {
     weight: string | null;
+    weightLabel: string | null;
     calories: string | null;
+    caloriesLabel: string | null;
     steps: string | null;
   };
 }
@@ -123,12 +125,33 @@ export function buildDashboard(
     ? { workouts: workouts.filter((w) => w.date === latestWorkoutDay), date: latestWorkoutDay }
     : null;
 
-  // Previous entries (most recent before today)
-  const prevWeight = weights.filter((w) => w.date < td).at(-1) ?? null;
-  const yesterday = daysAgo(1);
-  const yesterdayFoods = foods.filter((f) => f.date === yesterday);
-  const yesterdayCalories = yesterdayFoods.reduce((s, f) => s + (f.calories ?? 0), 0) || null;
-  const yesterdaySteps = steps.filter((s) => s.date === yesterday).at(-1)?.steps ?? null;
+  // Weight delta: try h-7 then h-6 … h-1 until a logged entry is found
+  function dateOffset(base: string, n: number): string {
+    const d = new Date(base);
+    d.setDate(d.getDate() - n);
+    return toDateStr(d);
+  }
+  let prevWeight: WeightEntry | null = null;
+  let weightLabel: string | null = null;
+  for (let n = 7; n >= 1; n--) {
+    const target = dateOffset(td, n);
+    const entry = weights.filter((w) => w.date === target && w.weight !== null).at(-1) ?? null;
+    if (entry) {
+      prevWeight = entry;
+      weightLabel = n === 7 ? "vs last week" : `vs h-${n}`;
+      break;
+    }
+  }
+
+  // Calories delta: average of h-7 to h-1 days that have data
+  const last7Start = dateOffset(td, 7);
+  const last7CalMap = dailyCalories(foods.filter((f) => f.date >= last7Start && f.date < td));
+  const last7CalValues = Object.values(last7CalMap);
+  const avgLast7Cal = last7CalValues.length ? average(last7CalValues) : null;
+  const caloriesLabel = last7CalValues.length ? `vs ${last7CalValues.length}d avg` : null;
+
+  // Steps: most recent previous entry
+  const prevStepsEntry = steps.filter((s) => s.date < td && s.steps !== null).at(-1) ?? null;
 
   // Weight series (14 days)
   const weightSeries = weights.map((w) => ({
@@ -173,8 +196,10 @@ export function buildDashboard(
     weekWorkouts,
     deltas: {
       weight: delta(todayWeight?.weight ?? null, prevWeight?.weight ?? null),
-      calories: delta(todayCalories, yesterdayCalories),
-      steps: delta(todaySteps?.steps ?? null, yesterdaySteps),
+      weightLabel,
+      calories: delta(todayCalories, avgLast7Cal),
+      caloriesLabel,
+      steps: delta(todaySteps?.steps ?? null, prevStepsEntry?.steps ?? null),
     },
   };
 }

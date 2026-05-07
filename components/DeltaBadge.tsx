@@ -1,10 +1,11 @@
 interface Props {
   value: string | null;
   unit?: string;
-  inverse?: boolean; // true = down is good (e.g. weight, calories)
+  inverse?: boolean;
+  vsLabel?: string;
 }
 
-export default function DeltaBadge({ value, unit = "", inverse = false }: Props) {
+export default function DeltaBadge({ value, unit = "", inverse = false, vsLabel = "vs prev" }: Props) {
   if (!value) return <span className="text-gray-400 text-xs">no prev data</span>;
 
   const isPositive = value.startsWith("+");
@@ -17,7 +18,7 @@ export default function DeltaBadge({ value, unit = "", inverse = false }: Props)
       }`}
     >
       {isPositive ? "▲" : "▼"} {value.replace(/^[+-]/, "")}
-      {unit} vs last week
+      {unit} {vsLabel}
     </span>
   );
 }
