@@ -2,10 +2,20 @@ import { DashboardData } from "@/lib/utils";
 import StatCard from "./StatCard";
 
 export default function TodaySnapshot({ data }: { data: DashboardData }) {
-  const workoutSummary =
-    data.todayWorkouts.length > 0
-      ? data.todayWorkouts.map((w) => w.exercise || w.level || "Workout").join(", ")
-      : null;
+  const workoutSummary = (workouts: typeof data.todayWorkouts) =>
+    workouts.length > 0 ? workouts.map((w) => w.exercise || w.level || "Workout").join(", ") : null;
+
+  const weight = data.todayWeight?.weight ?? data.latestWeight?.weight ?? null;
+  const weightStale = !data.todayWeight ? data.latestWeight?.date : null;
+
+  const calories = data.todayCalories ?? data.latestCalories?.calories ?? null;
+  const caloriesStale = !data.todayCalories ? data.latestCalories?.date : null;
+
+  const steps = data.todaySteps?.steps ?? data.latestSteps?.steps ?? null;
+  const stepsStale = !data.todaySteps ? data.latestSteps?.date : null;
+
+  const activeWorkouts = data.todayWorkouts.length ? data.todayWorkouts : data.latestWorkouts?.workouts ?? [];
+  const workoutStale = !data.todayWorkouts.length ? data.latestWorkouts?.date : null;
 
   return (
     <section>
@@ -16,32 +26,36 @@ export default function TodaySnapshot({ data }: { data: DashboardData }) {
         <StatCard
           icon="⚖️"
           label="Weight"
-          value={data.todayWeight?.weight?.toString() ?? null}
+          value={weight?.toString() ?? null}
           unit="kg"
           delta={data.deltas.weight}
           deltaUnit=" kg"
           inverse
+          staleDate={weightStale}
         />
         <StatCard
           icon="🔥"
           label="Calories"
-          value={data.todayCalories?.toString() ?? null}
+          value={calories?.toString() ?? null}
           unit="kcal"
           delta={data.deltas.calories}
           deltaUnit=" kcal"
           inverse
+          staleDate={caloriesStale}
         />
         <StatCard
           icon="👟"
           label="Steps"
-          value={data.todaySteps?.steps?.toLocaleString() ?? null}
+          value={steps?.toLocaleString() ?? null}
           delta={data.deltas.steps}
           deltaUnit=" steps"
+          staleDate={stepsStale}
         />
         <StatCard
           icon="💪"
           label="Workout"
-          value={workoutSummary ?? "Rest day"}
+          value={workoutSummary(activeWorkouts) ?? "Rest day"}
+          staleDate={workoutStale}
         />
       </div>
     </section>

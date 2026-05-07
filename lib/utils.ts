@@ -70,6 +70,10 @@ export interface DashboardData {
   todayProtein: number | null;
   todaySteps: StepsEntry | null;
   todayWorkouts: WorkoutEntry[];
+  latestWeight: { weight: number | null; date: string } | null;
+  latestCalories: { calories: number; date: string } | null;
+  latestSteps: { steps: number; date: string } | null;
+  latestWorkouts: { workouts: WorkoutEntry[]; date: string } | null;
   weightSeries: { date: string; weight: number | null; bodyFat: string }[];
   calorieSeries: { date: string; calories: number; protein: number }[];
   stepsSeries: { date: string; steps: number }[];
@@ -102,6 +106,22 @@ export function buildDashboard(
   const thisWeekFoods = foods.filter((f) => f.date >= thisWeekStart && f.date <= td);
   const thisWeekSteps = steps.filter((s) => s.date >= thisWeekStart && s.date <= td);
   const weekWorkouts = workouts.filter((w) => w.date >= thisWeekStart && w.date <= td);
+
+  // Latest entries before today (shown when today has no data)
+  const latestWeightEntry = !todayWeight ? weights.filter((w) => w.date < td && w.weight !== null).at(-1) : null;
+  const latestWeight = latestWeightEntry ? { weight: latestWeightEntry.weight, date: latestWeightEntry.date } : null;
+
+  const calByDay = dailyCalories(foods.filter((f) => f.date < td));
+  const latestCalDay = !todayCalories ? Object.keys(calByDay).sort().at(-1) : null;
+  const latestCalories = latestCalDay ? { calories: calByDay[latestCalDay], date: latestCalDay } : null;
+
+  const latestStepsEntry = !todaySteps ? steps.filter((s) => s.date < td && s.steps !== null).at(-1) : null;
+  const latestSteps = latestStepsEntry ? { steps: latestStepsEntry.steps!, date: latestStepsEntry.date } : null;
+
+  const latestWorkoutDay = !todayWorkouts.length ? workouts.filter((w) => w.date < td).at(-1)?.date : null;
+  const latestWorkouts = latestWorkoutDay
+    ? { workouts: workouts.filter((w) => w.date === latestWorkoutDay), date: latestWorkoutDay }
+    : null;
 
   // Previous entries (most recent before today)
   const prevWeight = weights.filter((w) => w.date < td).at(-1) ?? null;
@@ -143,6 +163,10 @@ export function buildDashboard(
     todayProtein,
     todaySteps,
     todayWorkouts,
+    latestWeight,
+    latestCalories,
+    latestSteps,
+    latestWorkouts,
     weightSeries,
     calorieSeries,
     stepsSeries,
