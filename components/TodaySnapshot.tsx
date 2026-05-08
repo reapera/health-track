@@ -1,5 +1,6 @@
 import { DashboardData } from "@/lib/utils";
 import StatCard from "./StatCard";
+import Link from "next/link";
 
 export default function TodaySnapshot({ data }: { data: DashboardData }) {
   const workoutSummary = (workouts: typeof data.todayWorkouts) => {
@@ -28,42 +29,18 @@ export default function TodaySnapshot({ data }: { data: DashboardData }) {
         Today — {data.today}
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard
-          icon="⚖️"
-          label="Weight"
-          value={weight?.toString() ?? null}
-          unit="kg"
-          delta={data.deltas.weight}
-          deltaUnit=" kg"
-          deltaLabel={data.deltas.weightLabel ?? undefined}
-          inverse
-          staleDate={weightStale}
-        />
-        <StatCard
-          icon="🔥"
-          label="Calories"
-          value={calories?.toString() ?? null}
-          unit="kcal"
-          delta={data.deltas.calories}
-          deltaUnit=" kcal"
-          deltaLabel={data.deltas.caloriesLabel ?? undefined}
-          inverse
-          staleDate={caloriesStale}
-        />
-        <StatCard
-          icon="👟"
-          label="Steps"
-          value={steps?.toLocaleString() ?? null}
-          delta={data.deltas.steps}
-          deltaUnit=" steps"
-          staleDate={stepsStale}
-        />
-        <StatCard
-          icon="💪"
-          label="Workout"
-          value={workoutSummary(activeWorkouts) ?? "Rest day"}
-          staleDate={workoutStale}
-        />
+        {(
+          [
+            { href: "/weight", card: <StatCard icon="⚖️" label="Weight" value={weight?.toString() ?? null} unit="kg" delta={data.deltas.weight} deltaUnit=" kg" deltaLabel={data.deltas.weightLabel ?? undefined} inverse staleDate={weightStale} /> },
+            { href: "/food",   card: <StatCard icon="🔥" label="Calories" value={calories?.toString() ?? null} unit="kcal" delta={data.deltas.calories} deltaUnit=" kcal" deltaLabel={data.deltas.caloriesLabel ?? undefined} inverse staleDate={caloriesStale} /> },
+            { href: "/steps",  card: <StatCard icon="👟" label="Steps" value={steps?.toLocaleString() ?? null} delta={data.deltas.steps} deltaUnit=" steps" staleDate={stepsStale} /> },
+            { href: "/workout",card: <StatCard icon="💪" label="Workout" value={workoutSummary(activeWorkouts) ?? "Rest day"} staleDate={workoutStale} /> },
+          ] as const
+        ).map(({ href, card }) => (
+          <Link key={href} href={href} className="block hover:opacity-80 transition-opacity">
+            {card}
+          </Link>
+        ))}
       </div>
     </section>
   );
