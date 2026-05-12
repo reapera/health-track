@@ -23,7 +23,7 @@ export default function StepsChart({ data, activeDate, onActiveDate }: Props) {
         <ResponsiveContainer width="100%" height={200}>
           <BarChart
             data={formatted}
-            onMouseMove={(s) => onActiveDate?.(s.activePayload?.[0]?.payload?.date ?? null)}
+            onMouseMove={(s: any) => onActiveDate?.(s.activePayload?.[0]?.payload?.date ?? null)}
             onMouseLeave={() => onActiveDate?.(null)}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
