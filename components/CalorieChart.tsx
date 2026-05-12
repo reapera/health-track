@@ -7,9 +7,10 @@ interface Props {
   data: Entry[];
   activeDate?: string | null;
   onActiveDate?: (date: string | null) => void;
+  onClickDate?: (date: string | null) => void;
 }
 
-export default function CalorieChart({ data, activeDate, onActiveDate }: Props) {
+export default function CalorieChart({ data, activeDate, onActiveDate, onClickDate }: Props) {
   const formatted = data.map((d) => ({ ...d, label: d.date.slice(5) }));
 
   return (
@@ -23,6 +24,7 @@ export default function CalorieChart({ data, activeDate, onActiveDate }: Props) 
             data={formatted}
             onMouseMove={(s: any) => onActiveDate?.(s.activePayload?.[0]?.payload?.date ?? null)}
             onMouseLeave={() => onActiveDate?.(null)}
+            onClick={(s: any) => onClickDate?.(s.activePayload?.[0]?.payload?.date ?? null)}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
             <XAxis dataKey="label" stroke="#6b7280" tick={{ fontSize: 11 }} />

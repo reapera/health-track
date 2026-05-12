@@ -16,17 +16,30 @@ interface Props {
 }
 
 export default function ChartsSection({ weightSeries, calorieSeries, stepsSeries, weekWorkouts }: Props) {
-  const [activeDate, setActiveDate] = useState<string | null>(null);
+  const [hoverDate, setHoverDate] = useState<string | null>(null);
+  const [pinnedDate, setPinnedDate] = useState<string | null>(null);
+
+  const activeDate = hoverDate ?? pinnedDate;
+
+  const handleClick = (date: string | null) => {
+    setPinnedDate((prev) => (prev === date ? null : date));
+  };
+
+  const chartProps = {
+    activeDate,
+    onActiveDate: setHoverDate,
+    onClickDate: handleClick,
+  };
 
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <WeightChart data={weightSeries} activeDate={activeDate} onActiveDate={setActiveDate} />
-        <StepsChart data={stepsSeries} activeDate={activeDate} onActiveDate={setActiveDate} />
+        <WeightChart data={weightSeries} {...chartProps} />
+        <StepsChart data={stepsSeries} {...chartProps} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <CalorieChart data={calorieSeries} activeDate={activeDate} onActiveDate={setActiveDate} />
-        <ProteinChart data={calorieSeries} activeDate={activeDate} onActiveDate={setActiveDate} />
+        <CalorieChart data={calorieSeries} {...chartProps} />
+        <ProteinChart data={calorieSeries} {...chartProps} />
       </div>
       <WorkoutList workouts={weekWorkouts} />
     </>
