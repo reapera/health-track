@@ -1,22 +1,15 @@
 "use client";
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  ReferenceLine,
-} from "recharts";
+import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
 
-interface Entry {
-  date: string;
-  steps: number;
+interface Entry { date: string; steps: number }
+interface Props {
+  data: Entry[];
+  activeDate?: string | null;
+  onActiveDate?: (date: string | null) => void;
 }
 
-export default function StepsChart({ data }: { data: Entry[] }) {
+export default function StepsChart({ data, activeDate, onActiveDate }: Props) {
   const formatted = data.map((d) => ({ ...d, label: d.date.slice(5) }));
   const goal = 10000;
 
@@ -28,7 +21,11 @@ export default function StepsChart({ data }: { data: Entry[] }) {
         <p className="text-gray-600 text-sm">No data yet</p>
       ) : (
         <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={formatted}>
+          <BarChart
+            data={formatted}
+            onMouseMove={(s) => onActiveDate?.(s.activePayload?.[0]?.payload?.date ?? null)}
+            onMouseLeave={() => onActiveDate?.(null)}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
             <XAxis dataKey="label" stroke="#6b7280" tick={{ fontSize: 11 }} />
             <YAxis stroke="#6b7280" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
@@ -39,7 +36,11 @@ export default function StepsChart({ data }: { data: Entry[] }) {
               formatter={(v) => [typeof v === "number" ? v.toLocaleString() : v, "Steps"]}
             />
             <ReferenceLine y={goal} stroke="#4ade80" strokeDasharray="4 4" label={{ value: "Goal", fill: "#4ade80", fontSize: 10 }} />
-            <Bar dataKey="steps" fill="#38bdf8" radius={[4, 4, 0, 0]} name="Steps" />
+            <Bar dataKey="steps" radius={[4, 4, 0, 0]}>
+              {formatted.map((entry, i) => (
+                <Cell key={i} fill="#38bdf8" opacity={!activeDate || entry.date === activeDate ? 1 : 0.25} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       )}

@@ -1,11 +1,7 @@
 import { checkConnections, checkToken, fetchFoodLog, fetchStepsLog, fetchWeightLog, fetchWorkoutLog } from "@/lib/notion";
 import { buildDashboard, daysAgo } from "@/lib/utils";
 import TodaySnapshot from "@/components/TodaySnapshot";
-import WeightChart from "@/components/WeightChart";
-import CalorieChart from "@/components/CalorieChart";
-import ProteinChart from "@/components/ProteinChart";
-import StepsChart from "@/components/StepsChart";
-import WorkoutList from "@/components/WorkoutList";
+import ChartsSection from "@/components/ChartsSection";
 
 export const dynamic = "force-dynamic";
 
@@ -132,17 +128,12 @@ export default async function DashboardPage() {
 
         <TodaySnapshot data={data} />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <WeightChart data={data.weightSeries} />
-          <StepsChart data={data.stepsSeries} />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CalorieChart data={data.calorieSeries} />
-          <ProteinChart data={data.calorieSeries} />
-        </div>
-
-        <WorkoutList workouts={data.weekWorkouts} />
+        <ChartsSection
+          weightSeries={data.weightSeries}
+          calorieSeries={data.calorieSeries}
+          stepsSeries={data.stepsSeries}
+          weekWorkouts={data.weekWorkouts}
+        />
       </div>
     </main>
   );
