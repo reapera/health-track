@@ -3,6 +3,7 @@ import { buildDashboard, daysAgo } from "@/lib/utils";
 import TodaySnapshot from "@/components/TodaySnapshot";
 import WeightChart from "@/components/WeightChart";
 import CalorieChart from "@/components/CalorieChart";
+import ProteinChart from "@/components/ProteinChart";
 import StepsChart from "@/components/StepsChart";
 import WorkoutList from "@/components/WorkoutList";
 
@@ -133,13 +134,15 @@ export default async function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <WeightChart data={data.weightSeries} />
-          <CalorieChart data={data.calorieSeries} />
+          <StepsChart data={data.stepsSeries} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <StepsChart data={data.stepsSeries} />
-          <WorkoutList workouts={data.weekWorkouts} />
+          <CalorieChart data={data.calorieSeries} />
+          <ProteinChart data={data.calorieSeries} />
         </div>
+
+        <WorkoutList workouts={data.weekWorkouts} />
       </div>
     </main>
   );
