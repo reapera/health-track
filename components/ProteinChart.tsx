@@ -25,7 +25,7 @@ export default function ProteinChart({ data }: { data: Entry[] }) {
             <Tooltip
               contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151", borderRadius: 8 }}
               labelStyle={{ color: "#9ca3af" }}
-              formatter={(v: number) => [`${v}g`, "Protein"]}
+              formatter={(v) => [`${v}g`, "Protein"]}
             />
             <Bar dataKey="protein" fill="#6366f1" radius={[4, 4, 0, 0]} />
           </BarChart>

@@ -25,7 +25,7 @@ export default function CalorieChart({ data }: { data: Entry[] }) {
             <Tooltip
               contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151", borderRadius: 8 }}
               labelStyle={{ color: "#9ca3af" }}
-              formatter={(v: number) => [`${v} kcal`, "Calories"]}
+              formatter={(v) => [`${v} kcal`, "Calories"]}
             />
             <Bar dataKey="calories" fill="#f59e0b" radius={[4, 4, 0, 0]} />
           </BarChart>
