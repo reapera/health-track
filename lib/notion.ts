@@ -81,20 +81,31 @@ export async function checkConnections(): Promise<Record<string, "ok" | string>>
 }
 
 async function queryDB(databaseId: string, startDate: string): Promise<FullEntry[]> {
-  const res = await fetch(`${NOTION_API}/databases/${databaseId}/query`, {
-    method: "POST",
-    headers: headers(),
-    body: JSON.stringify({
+  const results: FullEntry[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const body: Record<string, unknown> = {
       filter: { property: "Date", date: { on_or_after: startDate } },
       sorts: [{ property: "Date", direction: "ascending" }],
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { message?: string }).message ?? `Notion API error ${res.status}`);
-  }
-  const data = await res.json();
-  return (data.results ?? []).filter((p: FullEntry) => p.object === "page");
+    };
+    if (cursor) body.start_cursor = cursor;
+
+    const res = await fetch(`${NOTION_API}/databases/${databaseId}/query`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as { message?: string }).message ?? `Notion API error ${res.status}`);
+    }
+    const data = await res.json();
+    results.push(...(data.results ?? []).filter((p: FullEntry) => p.object === "page"));
+    cursor = data.has_more ? data.next_cursor : undefined;
+  } while (cursor);
+
+  return results;
 }
 
 export interface WeightEntry {
