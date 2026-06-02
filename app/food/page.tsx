@@ -43,7 +43,7 @@ function MealSection({ entries }: { entries: FoodEntry[] }) {
           <div className="flex flex-col gap-1">
             {items.map((item, i) => (
               <div key={i} className="flex items-center gap-3 text-sm">
-                <span className="text-white flex-1">{item.foodItem || "—"}</span>
+                <span className="text-white flex-1">{item.foodItem || item.name || "—"}</span>
                 <span className="text-gray-500 text-xs">{item.calories != null ? `${item.calories} kcal` : ""}</span>
                 <span className="text-gray-500 text-xs">{item.protein != null ? `${item.protein}g` : ""}</span>
               </div>

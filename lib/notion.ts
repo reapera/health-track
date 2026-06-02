@@ -118,6 +118,7 @@ export interface WeightEntry {
 export interface FoodEntry {
   date: string;
   meal: string | null;
+  name: string;
   foodItem: string;
   calories: number | null;
   protein: number | null;
@@ -153,6 +154,7 @@ export async function fetchFoodLog(startDate: string): Promise<FoodEntry[]> {
   return pages.map((p) => ({
     date: getDate(p, "Date") ?? "",
     meal: getSelect(p, "Meal"),
+    name: getText(p, "Name"),
     foodItem: getText(p, "Food Item"),
     calories: getNumber(p, "Calories"),
     protein: getNumber(p, "Protein (g)"),
