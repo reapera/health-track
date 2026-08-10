@@ -46,6 +46,7 @@ const DB = {
   food:    "3570c782-4a59-81ee-a3d8-da71155f7801",
   workout: "3570c782-4a59-8141-8842-fce74812fd2e",
   steps:   "3570c782-4a59-817a-a562-ecd83d8b9876",
+  lab:     "0dbc045b-8130-4f6d-9dee-be63a26b3624",
 };
 
 export async function checkToken(): Promise<{ ok: boolean; detail: string }> {
@@ -74,10 +75,10 @@ export async function checkConnections(): Promise<Record<string, "ok" | string>>
       return err instanceof Error ? err.message : "error";
     }
   }
-  const [weight, food, workout, steps] = await Promise.all([
-    probe(DB.weight), probe(DB.food), probe(DB.workout), probe(DB.steps),
+  const [weight, food, workout, steps, lab] = await Promise.all([
+    probe(DB.weight), probe(DB.food), probe(DB.workout), probe(DB.steps), probe(DB.lab),
   ]);
-  return { "Weight Log": weight, "Food Log": food, "Workout Log": workout, "Steps Log": steps };
+  return { "Weight Log": weight, "Food Log": food, "Workout Log": workout, "Steps Log": steps, "Lab Results": lab };
 }
 
 async function queryDB(databaseId: string, startDate: string): Promise<FullEntry[]> {
@@ -179,5 +180,26 @@ export async function fetchStepsLog(startDate: string): Promise<StepsEntry[]> {
     date: getDate(p, "Date") ?? "",
     steps: getNumber(p, "Steps"),
     note: getText(p, "Note"),
+  }));
+}
+
+export interface LabEntry {
+  date: string;
+  name: string;
+  bloodSugar: number | null;
+  cholesterol: number | null;
+  uricAcid: number | null;
+  notes: string;
+}
+
+export async function fetchLabLog(startDate: string): Promise<LabEntry[]> {
+  const pages = await queryDB(DB.lab, startDate);
+  return pages.map((p) => ({
+    date: getDate(p, "Date") ?? "",
+    name: getText(p, "Name"),
+    bloodSugar: getNumber(p, "Blood Sugar"),
+    cholesterol: getNumber(p, "Cholesterol"),
+    uricAcid: getNumber(p, "Uric Acid"),
+    notes: getText(p, "Notes"),
   }));
 }
