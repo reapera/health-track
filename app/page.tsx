@@ -1,4 +1,4 @@
-import { checkConnections, checkToken, fetchFoodLog, fetchLabLog, fetchStepsLog, fetchWeightLog, fetchWorkoutLog } from "@/lib/notion";
+import { checkConnections, checkToken, fetchFoodLog, fetchLabLog, fetchStepsLog, fetchWeightLog, fetchWorkoutLog, type LabEntry } from "@/lib/notion";
 import { buildDashboard, daysAgo } from "@/lib/utils";
 import TodaySnapshot from "@/components/TodaySnapshot";
 import ChartsSection from "@/components/ChartsSection";
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
   }
 
   let data;
-  let latestLab = null;
+  let latestLab: LabEntry[] = [];
   try {
     const start = daysAgo(13);
     const [weights, foods, workouts, steps, labs] = await Promise.all([
@@ -113,10 +113,11 @@ export default async function DashboardPage() {
       fetchFoodLog(start),
       fetchWorkoutLog(start),
       fetchStepsLog(start),
-      fetchLabLog("2020-01-01"),
+      fetchLabLog("2000-01-01"),
     ]);
     data = buildDashboard(weights, foods, workouts, steps);
-    latestLab = labs.length > 0 ? [...labs].sort((a, b) => b.date.localeCompare(a.date))[0] : null;
+    const latestDate = labs.map((l) => l.date).sort().at(-1);
+    latestLab = latestDate ? labs.filter((l) => l.date === latestDate) : [];
   } catch (err) {
     const [token, connections] = await Promise.all([checkToken(), checkConnections()]);
     return <FetchError message={err instanceof Error ? err.message : String(err)} token={token} connections={connections} />;
@@ -139,7 +140,7 @@ export default async function DashboardPage() {
           weekWorkouts={data.weekWorkouts}
         />
 
-        <LabCard latest={latestLab} />
+        <LabCard entries={latestLab} />
       </div>
     </main>
   );

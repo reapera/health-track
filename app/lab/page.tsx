@@ -1,44 +1,53 @@
 import Link from "next/link";
-import { fetchLabLog } from "@/lib/notion";
+import { fetchLabLog, LabEntry } from "@/lib/notion";
 
 export const dynamic = "force-dynamic";
 
-// Reference ranges
-const RANGES = {
-  bloodSugar:  { low: 70,  high: 99,  unit: "mg/dL", label: "Blood Sugar",  warn: 126 },
-  cholesterol: { low: 0,   high: 199, unit: "mg/dL", label: "Cholesterol",  warn: 239 },
-  uricAcid:    { low: 3.5, high: 7.2, unit: "mg/dL", label: "Uric Acid",    warn: 9.0 },
+const FLAG_STYLES: Record<string, { text: string; badge: string; dot: string }> = {
+  Normal:     { text: "text-emerald-400", badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400" },
+  Borderline: { text: "text-amber-400",   badge: "bg-amber-500/10 text-amber-400 border-amber-500/30",       dot: "bg-amber-400" },
+  High:       { text: "text-red-400",     badge: "bg-red-500/10 text-red-400 border-red-500/30",             dot: "bg-red-400" },
+  Low:        { text: "text-sky-400",     badge: "bg-sky-500/10 text-sky-400 border-sky-500/30",             dot: "bg-sky-400" },
 };
 
-function status(value: number | null, range: typeof RANGES.bloodSugar) {
-  if (value === null) return "empty";
-  if (value <= range.high) return "normal";
-  if (value <= range.warn) return "borderline";
-  return "high";
+const NEUTRAL = { text: "text-gray-300", badge: "bg-gray-800 text-gray-400 border-gray-700", dot: "bg-gray-600" };
+
+export function flagStyle(flag: string | null) {
+  return (flag && FLAG_STYLES[flag]) || NEUTRAL;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  normal:     "text-emerald-400",
-  borderline: "text-amber-400",
-  high:       "text-red-400",
-  empty:      "text-gray-600",
-};
-
-function Metric({ label, value, unit, s }: { label: string; value: number | null; unit: string; s: string }) {
+function TestRow({ entry }: { entry: LabEntry }) {
+  const s = flagStyle(entry.flag);
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-gray-500 text-xs">{label}</span>
-      <span className={`font-semibold text-lg ${STATUS_COLORS[s]}`}>
-        {value != null ? `${value}` : "—"}
-        {value != null && <span className="text-xs font-normal ml-1 text-gray-500">{unit}</span>}
-      </span>
+    <div className="flex items-start justify-between gap-4 py-3 border-b border-gray-800 last:border-0">
+      <div className="flex flex-col gap-0.5 min-w-0">
+        <span className="text-white text-sm">{entry.test || "—"}</span>
+        {entry.referenceRange && (
+          <span className="text-gray-600 text-xs">Ref: {entry.referenceRange} {entry.unit}</span>
+        )}
+        {entry.note && <span className="text-gray-600 text-xs italic">{entry.note}</span>}
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <span className={`font-semibold ${s.text}`}>
+          {entry.value != null ? entry.value : "—"}
+          {entry.unit && <span className="text-xs font-normal text-gray-500 ml-1">{entry.unit}</span>}
+        </span>
+        {entry.flag && (
+          <span className={`text-xs px-2 py-0.5 rounded-full border ${s.badge}`}>{entry.flag}</span>
+        )}
+      </div>
     </div>
   );
 }
 
 export default async function LabPage() {
-  const entries = await fetchLabLog("2020-01-01");
-  const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+  const entries = await fetchLabLog("2000-01-01");
+
+  const byDate: Record<string, LabEntry[]> = {};
+  for (const e of entries) {
+    byDate[e.date] = [...(byDate[e.date] ?? []), e];
+  }
+  const dates = Object.keys(byDate).sort().reverse();
 
   return (
     <main className="min-h-screen bg-gray-950 text-white p-6 md:p-10">
@@ -49,43 +58,26 @@ export default async function LabPage() {
           <h1 className="text-2xl font-bold">Lab Results</h1>
         </div>
 
-        {/* Reference ranges legend */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col gap-3">
-          <p className="text-gray-400 text-xs uppercase tracking-widest">Reference Ranges</p>
-          <div className="grid grid-cols-3 gap-4 text-xs">
-            {Object.values(RANGES).map((r) => (
-              <div key={r.label}>
-                <p className="text-gray-300 font-medium mb-1">{r.label}</p>
-                <p className="text-emerald-400">Normal: ≤{r.high} {r.unit}</p>
-                <p className="text-amber-400">Borderline: ≤{r.warn}</p>
-                <p className="text-red-400">High: &gt;{r.warn}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Entries */}
-        {sorted.length === 0 ? (
+        {dates.length === 0 ? (
           <p className="text-gray-600 text-sm">No lab results logged yet.</p>
         ) : (
           <div className="flex flex-col gap-4">
-            {sorted.map((e, i) => {
-              const bs = status(e.bloodSugar, RANGES.bloodSugar);
-              const ch = status(e.cholesterol, RANGES.cholesterol);
-              const ua = status(e.uricAcid, RANGES.uricAcid);
+            {dates.map((date) => {
+              const tests = byDate[date];
+              const abnormal = tests.filter((t) => t.flag && t.flag !== "Normal").length;
               return (
-                <div key={i} className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col gap-4">
-                  <div className="flex items-center justify-between">
-                    <p className="font-mono text-sm text-gray-300">{e.date}</p>
-                    {e.name && <p className="text-gray-500 text-xs">{e.name}</p>}
+                <section key={date} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-mono text-sm text-gray-300">{date}</p>
+                    <p className="text-xs text-gray-500">
+                      {tests.length} test{tests.length !== 1 ? "s" : ""}
+                      {abnormal > 0 && <span className="text-amber-400"> · {abnormal} flagged</span>}
+                    </p>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <Metric label="Blood Sugar" value={e.bloodSugar} unit="mg/dL" s={bs} />
-                    <Metric label="Cholesterol" value={e.cholesterol} unit="mg/dL" s={ch} />
-                    <Metric label="Uric Acid" value={e.uricAcid} unit="mg/dL" s={ua} />
+                  <div className="flex flex-col">
+                    {tests.map((t, i) => <TestRow key={i} entry={t} />)}
                   </div>
-                  {e.notes && <p className="text-gray-500 text-xs">{e.notes}</p>}
-                </div>
+                </section>
               );
             })}
           </div>

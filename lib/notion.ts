@@ -46,7 +46,7 @@ const DB = {
   food:    "3570c782-4a59-81ee-a3d8-da71155f7801",
   workout: "3570c782-4a59-8141-8842-fce74812fd2e",
   steps:   "3570c782-4a59-817a-a562-ecd83d8b9876",
-  lab:     "0dbc045b-8130-4f6d-9dee-be63a26b3624",
+  lab:     "3b80c782-4a59-8196-9137-c7ee43de894e",
 };
 
 export async function checkToken(): Promise<{ ok: boolean; detail: string }> {
@@ -185,21 +185,25 @@ export async function fetchStepsLog(startDate: string): Promise<StepsEntry[]> {
 
 export interface LabEntry {
   date: string;
-  name: string;
-  bloodSugar: number | null;
-  cholesterol: number | null;
-  uricAcid: number | null;
-  notes: string;
+  test: string;
+  value: number | null;
+  unit: string;
+  flag: string | null;
+  referenceRange: string;
+  testType: string | null;
+  note: string;
 }
 
 export async function fetchLabLog(startDate: string): Promise<LabEntry[]> {
   const pages = await queryDB(DB.lab, startDate);
   return pages.map((p) => ({
     date: getDate(p, "Date") ?? "",
-    name: getText(p, "Name"),
-    bloodSugar: getNumber(p, "Blood Sugar"),
-    cholesterol: getNumber(p, "Cholesterol"),
-    uricAcid: getNumber(p, "Uric Acid"),
-    notes: getText(p, "Notes"),
+    test: getText(p, "Test") || getText(p, "Name"),
+    value: getNumber(p, "Value"),
+    unit: getText(p, "Unit"),
+    flag: getSelect(p, "Flag"),
+    referenceRange: getText(p, "Reference Range"),
+    testType: getSelect(p, "Test Type"),
+    note: getText(p, "Note"),
   }));
 }
