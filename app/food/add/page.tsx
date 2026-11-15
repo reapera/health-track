@@ -1,6 +1,9 @@
 import Link from "next/link";
 import FoodChat from "./FoodChat";
 
+// Applies to the Server Actions called from this page (the Gemini request)
+export const maxDuration = 60;
+
 export const metadata = { title: "Add Food — Health Dashboard" };
 
 export default function AddFoodPage() {
