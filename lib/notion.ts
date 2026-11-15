@@ -1,6 +1,8 @@
 import { Client } from "@notionhq/client";
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 
+import type { NewFoodEntry } from "./food";
+
 type FullEntry = PageObjectResponse;
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
@@ -206,18 +208,6 @@ export async function fetchLabLog(startDate: string): Promise<LabEntry[]> {
     testType: getSelect(p, "Test Type"),
     note: getText(p, "Note"),
   }));
-}
-
-export const FOOD_MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
-export type FoodMeal = (typeof FOOD_MEALS)[number];
-
-export interface NewFoodEntry {
-  date: string;
-  meal: FoodMeal;
-  foodItem: string;
-  calories: number;
-  protein: number | null;
-  note: string;
 }
 
 export async function createFoodEntry(entry: NewFoodEntry): Promise<void> {

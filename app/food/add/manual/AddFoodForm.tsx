@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useSyncExternalStore } from "react";
-import { addFood, type AddFoodState } from "./actions";
+import { addFood, type AddFoodState } from "../actions";
 
 const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
 const PASSCODE_KEY = "health-track-passcode";

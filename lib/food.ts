@@ -1,0 +1,55 @@
+export const FOOD_MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
+export type FoodMeal = (typeof FOOD_MEALS)[number];
+
+export interface NewFoodEntry {
+  date: string;
+  meal: FoodMeal;
+  foodItem: string;
+  calories: number;
+  protein: number | null;
+  note: string;
+}
+
+type Result = { ok: true; entry: NewFoodEntry } | { ok: false; error: string };
+
+function toNumber(v: unknown): number | null {
+  if (v === null || v === undefined || v === "") return null;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+// Validates untrusted input (form fields, LLM tool arguments, client payloads).
+export function parseFoodEntry(raw: Record<string, unknown>): Result {
+  const foodItem = String(raw.foodItem ?? "").trim();
+  const note = String(raw.note ?? "").trim();
+  const date = String(raw.date ?? "").trim();
+  const meal = String(raw.meal ?? "").trim();
+  const calories = toNumber(raw.calories);
+  const protein = toNumber(raw.protein);
+
+  if (!foodItem) return { ok: false, error: "Enter what you ate." };
+  if (foodItem.length > 200 || note.length > 500) return { ok: false, error: "Text is too long." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) return { ok: false, error: "Invalid date." };
+  if (!FOOD_MEALS.includes(meal as FoodMeal)) return { ok: false, error: "Pick a meal." };
+  if (calories === null || Number.isNaN(calories) || calories < 0 || calories > 20000) {
+    return { ok: false, error: "Enter calories as a number." };
+  }
+  if (protein !== null && (Number.isNaN(protein) || protein < 0 || protein > 2000)) {
+    return { ok: false, error: "Protein must be a number." };
+  }
+  return {
+    ok: true,
+    entry: {
+      date,
+      meal: meal as FoodMeal,
+      foodItem,
+      calories: Math.round(calories),
+      protein: protein === null ? null : Math.round(protein * 10) / 10,
+      note,
+    },
+  };
+}
+
+export function describeEntry(e: NewFoodEntry): string {
+  return `${e.meal} · ${e.foodItem} — ${e.calories} kcal${e.protein !== null ? ` · ${e.protein}g protein` : ""}`;
+}
