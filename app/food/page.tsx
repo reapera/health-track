@@ -80,6 +80,7 @@ export default async function FoodPage() {
         <div className="flex items-center gap-4">
           <Link href="/" className="text-gray-500 hover:text-white text-sm transition-colors">← Dashboard</Link>
           <h1 className="text-2xl font-bold">Food Log</h1>
+          <Link href="/food/add" className="ml-auto bg-white text-gray-950 text-sm font-semibold rounded-xl px-4 py-2 hover:opacity-80 transition-opacity">+ Add food</Link>
         </div>
 
         <section className="flex flex-col gap-2">
