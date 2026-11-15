@@ -207,3 +207,38 @@ export async function fetchLabLog(startDate: string): Promise<LabEntry[]> {
     note: getText(p, "Note"),
   }));
 }
+
+export const FOOD_MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
+export type FoodMeal = (typeof FOOD_MEALS)[number];
+
+export interface NewFoodEntry {
+  date: string;
+  meal: FoodMeal;
+  foodItem: string;
+  calories: number;
+  protein: number | null;
+  note: string;
+}
+
+export async function createFoodEntry(entry: NewFoodEntry): Promise<void> {
+  const text = (content: string) => [{ type: "text", text: { content } }];
+  const properties: Record<string, unknown> = {
+    Name: { title: text(entry.foodItem) },
+    "Food Item": { rich_text: text(entry.foodItem) },
+    Date: { date: { start: entry.date } },
+    Meal: { select: { name: entry.meal } },
+    Calories: { number: entry.calories },
+  };
+  if (entry.protein !== null) properties["Protein (g)"] = { number: entry.protein };
+  if (entry.note) properties.Note = { rich_text: text(entry.note) };
+
+  const res = await fetch(`${NOTION_API}/pages`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ parent: { database_id: DB.food }, properties }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { message?: string }).message ?? `Notion API error ${res.status}`);
+  }
+}
