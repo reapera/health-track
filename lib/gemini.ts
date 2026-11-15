@@ -67,18 +67,26 @@ interface Part {
 export async function estimateFood(turns: ChatTurn[], clientDate: string, clientTime: string): Promise<EstimateResult> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("GEMINI_API_KEY is not set on the server. Add it in Vercel and redeploy.");
-  const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
+  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 
-  const res = await fetch(`${API}/${encodeURIComponent(model)}:generateContent`, {
-    method: "POST",
-    headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemPrompt(clientDate, clientTime) }] },
-      contents: turns.map((t) => ({ role: t.role === "user" ? "user" : "model", parts: [{ text: t.text }] })),
-      tools: [tool],
-    }),
-    signal: AbortSignal.timeout(30000),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API}/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST",
+      headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt(clientDate, clientTime) }] },
+        contents: turns.map((t) => ({ role: t.role === "user" ? "user" : "model", parts: [{ text: t.text }] })),
+        tools: [tool],
+      }),
+      signal: AbortSignal.timeout(25000),
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === "TimeoutError") {
+      throw new Error(`Gemini (${model}) took longer than 25s to respond. Try again.`);
+    }
+    throw new Error(`Could not reach Gemini: ${err instanceof Error ? err.message : "network error"}`);
+  }
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
