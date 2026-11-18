@@ -1,10 +1,10 @@
 "use client";
 
+import { rememberPasscode as storePasscode, savedPasscode } from "@/lib/passcode-client";
 import { useActionState, useEffect, useState, useSyncExternalStore } from "react";
 import { addFood, type AddFoodState } from "../actions";
 
 const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
-const PASSCODE_KEY = "health-track-passcode";
 
 const initialState: AddFoodState = { status: "idle", message: "", added: [] };
 
@@ -26,25 +26,17 @@ const inputClass =
   "w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:border-gray-400";
 const labelClass = "text-gray-400 text-xs uppercase tracking-wide";
 
-function savedPasscode(): string {
-  try {
-    return localStorage.getItem(PASSCODE_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
-
 const noopSubscribe = () => () => {};
 
 // Defaults (date, meal, saved passcode) come from the device, so the form renders on the client only.
-export default function AddFoodForm() {
+export default function AddFoodForm({ initialDate }: { initialDate?: string }) {
   const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false);
-  return isClient ? <Form /> : null;
+  return isClient ? <Form initialDate={initialDate} /> : null;
 }
 
-function Form() {
+function Form({ initialDate }: { initialDate?: string }) {
   const [state, formAction, pending] = useActionState(addFood, initialState);
-  const [date, setDate] = useState(localDate);
+  const [date, setDate] = useState(() => initialDate ?? localDate());
   const [meal, setMeal] = useState<string>(mealForNow);
   const [passcode, setPasscode] = useState(savedPasscode);
   const added = state.added;
@@ -52,9 +44,7 @@ function Form() {
   // Remember the passcode on this device once the server has accepted it
   useEffect(() => {
     if (added.length === 0) return;
-    try {
-      localStorage.setItem(PASSCODE_KEY, passcode);
-    } catch {}
+    storePasscode(passcode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [added.length]);
 

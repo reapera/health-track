@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { fetchFoodLog, FoodEntry } from "@/lib/notion";
 import { today, daysAgo } from "@/lib/utils";
+import FoodItem from "./FoodItem";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,17 @@ function groupByMeal(entries: FoodEntry[]) {
     const bi = MEAL_ORDER.indexOf(b);
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
+}
+
+function AddLink({ date }: { date: string }) {
+  return (
+    <Link
+      href={`/food/add?date=${date}`}
+      className="text-gray-400 hover:text-white text-xs border border-gray-700 hover:border-gray-500 rounded-lg px-2 py-1 transition-colors"
+    >
+      + Add
+    </Link>
+  );
 }
 
 function DayTotal({ entries }: { entries: FoodEntry[] }) {
@@ -41,12 +53,8 @@ function MealSection({ entries }: { entries: FoodEntry[] }) {
         <div key={meal}>
           <p className="text-gray-400 text-xs uppercase tracking-wide mb-2">{meal}</p>
           <div className="flex flex-col gap-1">
-            {items.map((item, i) => (
-              <div key={i} className="flex items-center gap-3 text-sm">
-                <span className="text-white flex-1">{item.foodItem || item.name || "—"}</span>
-                <span className="text-gray-500 text-xs">{item.calories != null ? `${item.calories} kcal` : ""}</span>
-                <span className="text-gray-500 text-xs">{item.protein != null ? `${item.protein}g` : ""}</span>
-              </div>
+            {items.map((item) => (
+              <FoodItem key={item.id} entry={item} />
             ))}
           </div>
         </div>
@@ -84,7 +92,10 @@ export default async function FoodPage() {
         </div>
 
         <section className="flex flex-col gap-2">
-          <p className="text-gray-400 text-xs uppercase tracking-widest">Today — {td}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-gray-400 text-xs uppercase tracking-widest">Today — {td}</p>
+            <AddLink date={td} />
+          </div>
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
             {todayEntries.length > 0
               ? <MealSection entries={todayEntries} />
@@ -93,16 +104,23 @@ export default async function FoodPage() {
         </section>
 
         <section className="flex flex-col gap-3">
-          <p className="text-gray-400 text-xs uppercase tracking-widest">History ({historyDays.length} days)</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-gray-400 text-xs uppercase tracking-widest">History ({historyDays.length} days)</p>
+            <form action="/food/add" className="flex items-center gap-2">
+              <input type="date" name="date" required max={td} aria-label="Date to add food for" className="bg-gray-900 border border-gray-800 rounded-lg px-2 py-1 text-sm text-gray-300" />
+              <button className="text-gray-400 hover:text-white text-xs border border-gray-700 hover:border-gray-500 rounded-lg px-2 py-1 transition-colors">+ Add</button>
+            </form>
+          </div>
           {historyDays.length === 0 ? (
             <p className="text-gray-600 text-sm">No previous entries</p>
           ) : (
             <div className="flex flex-col gap-3">
               {historyDays.map((date) => (
                 <div key={date} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="font-mono text-sm text-gray-300">{date}</p>
+                  <div className="flex items-center gap-3 mb-4">
+                    <p className="font-mono text-sm text-gray-300 flex-1">{date}</p>
                     <DayTotal entries={byDate[date]} />
+                    <AddLink date={date} />
                   </div>
                   <MealSection entries={byDate[date]} />
                 </div>

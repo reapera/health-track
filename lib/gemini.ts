@@ -13,7 +13,7 @@ export interface EstimateResult {
   items: NewFoodEntry[];
 }
 
-function systemPrompt(clientDate: string, clientTime: string): string {
+function systemPrompt(clientDate: string, clientTime: string, logDate: string): string {
   return [
     "You are the food logging assistant inside a personal health tracker.",
     "The user tells you what they ate, in English or Indonesian. Estimate calories (kcal) and protein (g) for each item,",
@@ -24,7 +24,9 @@ function systemPrompt(clientDate: string, clientTime: string): string {
     "The tool only shows a proposal: the user confirms it in the app before anything is saved, so never say it has been logged.",
     "Alongside the tool call, reply in one or two short sentences noting key assumptions. No markdown.",
     `Meal must be one of: ${FOOD_MEALS.join(", ")}. Use the meal the user states; otherwise infer it from the current time.`,
-    `Today is ${clientDate} and the user's local time is ${clientTime}. Use today's date unless they say otherwise.`,
+    logDate === clientDate
+      ? `Today is ${clientDate} and the user's local time is ${clientTime}. Use today's date unless they say otherwise.`
+      : `Today is ${clientDate}, but the user is backfilling ${logDate}: use ${logDate} for every entry unless they name another date. Infer the meal from the food, not the current time.`,
     "If the message is not about food intake, answer briefly without calling the tool.",
   ].join(" ");
 }
@@ -64,7 +66,12 @@ interface Part {
   functionCall?: { name?: string; args?: { items?: unknown } };
 }
 
-export async function estimateFood(turns: ChatTurn[], clientDate: string, clientTime: string): Promise<EstimateResult> {
+export async function estimateFood(
+  turns: ChatTurn[],
+  clientDate: string,
+  clientTime: string,
+  logDate: string = clientDate
+): Promise<EstimateResult> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("GEMINI_API_KEY is not set on the server. Add it in Vercel and redeploy.");
   const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
@@ -75,7 +82,7 @@ export async function estimateFood(turns: ChatTurn[], clientDate: string, client
       method: "POST",
       headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt(clientDate, clientTime) }] },
+        systemInstruction: { parts: [{ text: systemPrompt(clientDate, clientTime, logDate) }] },
         contents: turns.map((t) => ({ role: t.role === "user" ? "user" : "model", parts: [{ text: t.text }] })),
         tools: [tool],
       }),
@@ -109,8 +116,8 @@ export async function estimateFood(turns: ChatTurn[], clientDate: string, client
         meal: r.meal,
         calories: r.calories,
         protein: r.protein_g,
-        // Fall back to today if the model returns a malformed date
-        date: /^\d{4}-\d{2}-\d{2}$/.test(String(r.date)) ? r.date : clientDate,
+        // Fall back to the selected date if the model returns a malformed one
+        date: /^\d{4}-\d{2}-\d{2}$/.test(String(r.date)) ? r.date : logDate,
         note: "AI estimate",
       });
       if (parsed.ok) items.push(parsed.entry);

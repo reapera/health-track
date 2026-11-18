@@ -2,7 +2,8 @@
 
 import { describeEntry, parseFoodEntry, type NewFoodEntry } from "@/lib/food";
 import { estimateFood, type ChatTurn } from "@/lib/gemini";
-import { createFoodEntry } from "@/lib/notion";
+import { refresh } from "next/cache";
+import { createFoodEntry, deleteFoodEntry, updateFoodEntry } from "@/lib/notion";
 import { passcodeError } from "@/lib/passcode";
 
 // Server Actions are reachable by direct POST, so every action checks the passcode itself.
@@ -53,7 +54,8 @@ export async function chatFood(
   passcode: string,
   turns: ChatTurn[],
   clientDate: string,
-  clientTime: string
+  clientTime: string,
+  logDate?: string
 ): Promise<ChatFoodResult> {
   const denied = passcodeError(String(passcode ?? ""));
   if (denied) return { ok: false, error: denied, auth: true };
@@ -68,7 +70,8 @@ export async function chatFood(
   const time = /^\d{2}:\d{2}$/.test(clientTime) ? clientTime : "12:00";
 
   try {
-    const { reply, items } = await estimateFood(clean, date, time);
+    const target = typeof logDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(logDate) ? logDate : date;
+    const { reply, items } = await estimateFood(clean, date, time, target);
     return { ok: true, reply, items };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Failed to reach Gemini." };
@@ -105,4 +108,32 @@ export async function logFoods(passcode: string, items: unknown[]): Promise<LogF
     return { ok: false, error: logged > 0 ? `${message} (${logged} of ${entries.length} saved)` : message, logged };
   }
   return { ok: true, logged };
+}
+
+export type EditFoodResult = { ok: true } | { ok: false; error: string; auth?: boolean };
+
+export async function updateFood(passcode: string, id: string, raw: unknown): Promise<EditFoodResult> {
+  const denied = passcodeError(String(passcode ?? ""));
+  if (denied) return { ok: false, error: denied, auth: true };
+  const parsed = parseFoodEntry((raw ?? {}) as Record<string, unknown>);
+  if (!parsed.ok) return { ok: false, error: parsed.error };
+  try {
+    await updateFoodEntry(String(id), parsed.entry);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to update Notion." };
+  }
+  refresh();
+  return { ok: true };
+}
+
+export async function deleteFood(passcode: string, id: string): Promise<EditFoodResult> {
+  const denied = passcodeError(String(passcode ?? ""));
+  if (denied) return { ok: false, error: denied, auth: true };
+  try {
+    await deleteFoodEntry(String(id));
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to delete in Notion." };
+  }
+  refresh();
+  return { ok: true };
 }

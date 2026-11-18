@@ -1,10 +1,9 @@
 "use client";
 
+import { rememberPasscode as storePasscode, savedPasscode } from "@/lib/passcode-client";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { FOOD_MEALS, type NewFoodEntry } from "@/lib/food";
 import { chatFood, logFoods } from "./actions";
-
-const PASSCODE_KEY = "health-track-passcode";
 
 interface DraftItem {
   foodItem: string;
@@ -36,14 +35,6 @@ function localNow() {
   };
 }
 
-function savedPasscode(): string {
-  try {
-    return localStorage.getItem(PASSCODE_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
-
 function toDraft(e: NewFoodEntry): DraftItem {
   return {
     foodItem: e.foodItem,
@@ -69,12 +60,14 @@ function historyText(m: Message): string {
 const noopSubscribe = () => () => {};
 
 // Passcode and date defaults come from the device, so the chat renders on the client only.
-export default function FoodChat() {
+export default function FoodChat({ initialDate }: { initialDate?: string }) {
   const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false);
-  return isClient ? <Chat /> : null;
+  return isClient ? <Chat initialDate={initialDate} /> : null;
 }
 
-function Chat() {
+function Chat({ initialDate }: { initialDate?: string }) {
+  const today = localNow().date;
+  const [logDate, setLogDate] = useState(initialDate && initialDate <= today ? initialDate : today);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -90,9 +83,7 @@ function Chat() {
 
   function rememberPasscode() {
     setAskPasscode(false);
-    try {
-      localStorage.setItem(PASSCODE_KEY, passcode);
-    } catch {}
+    storePasscode(passcode);
   }
 
   function patch(id: number, change: Partial<Message>) {
@@ -137,7 +128,7 @@ function Chat() {
     const { date, time } = localNow();
     let res;
     try {
-      res = await chatFood(passcode, history.map((m) => ({ role: m.role, text: historyText(m) })), date, time);
+      res = await chatFood(passcode, history.map((m) => ({ role: m.role, text: historyText(m) })), date, time, logDate);
     } catch {
       res = { ok: false as const, error: "Network error. Try again." };
     }
@@ -317,6 +308,25 @@ function Chat() {
       </div>
 
       <div className="flex flex-col gap-2 pb-4 pt-2 border-t border-gray-900">
+        <label className="flex items-center gap-2 text-sm text-gray-400">
+          <span>Logging for</span>
+          <input
+            type="date"
+            value={logDate}
+            max={today}
+            onChange={(e) => setLogDate(e.target.value || today)}
+            className={`bg-gray-900 border rounded-lg px-2 py-1 text-base focus:outline-none focus:border-gray-400 ${
+              logDate === today ? "border-gray-800 text-gray-300" : "border-amber-500/60 text-amber-300"
+            }`}
+          />
+          {logDate === today ? (
+            <span className="text-gray-500">Today</span>
+          ) : (
+            <button type="button" onClick={() => setLogDate(today)} className="text-gray-500 hover:text-white underline underline-offset-2">
+              Back to today
+            </button>
+          )}
+        </label>
         {error && <p role="alert" className="text-red-400 text-sm">{error}</p>}
         {askPasscode && (
           <input
