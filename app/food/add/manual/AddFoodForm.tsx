@@ -23,8 +23,8 @@ function mealForNow(): (typeof MEALS)[number] {
 }
 
 const inputClass =
-  "w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:border-amber-400";
-const labelClass = "text-gray-400 text-xs uppercase tracking-wide";
+  "w-full bg-stone-800 border border-stone-700 rounded-xl px-4 py-3 text-base text-white placeholder-stone-500 focus:outline-none focus:border-amber-400";
+const labelClass = "text-stone-400 text-xs uppercase tracking-wide";
 
 const noopSubscribe = () => () => {};
 
@@ -50,7 +50,7 @@ function Form({ initialDate }: { initialDate?: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <form action={formAction} className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col gap-4">
+      <form action={formAction} className="bg-[#1f160e]/90 border border-amber-950/80 rounded-2xl p-5 flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <span className={labelClass}>Meal</span>
           <input type="hidden" name="meal" value={meal} />
@@ -62,7 +62,7 @@ function Form({ initialDate }: { initialDate?: string }) {
                 onClick={() => setMeal(m)}
                 aria-pressed={meal === m}
                 className={`rounded-xl py-2.5 text-xs sm:text-sm transition-colors ${
-                  meal === m ? "bg-amber-400 text-gray-950 font-semibold" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  meal === m ? "bg-amber-400 text-stone-950 font-semibold" : "bg-stone-800 text-stone-300 hover:bg-stone-700"
                 }`}
               >
                 {m}
@@ -160,7 +160,7 @@ function Form({ initialDate }: { initialDate?: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="bg-amber-400 text-gray-950 font-semibold rounded-xl py-3 disabled:opacity-50 transition-opacity"
+          className="bg-amber-400 text-stone-950 font-semibold rounded-xl py-3 disabled:opacity-50 transition-opacity"
         >
           {pending ? "Saving…" : "Add to Notion"}
         </button>
@@ -168,8 +168,8 @@ function Form({ initialDate }: { initialDate?: string }) {
 
       {added.length > 0 && (
         <section className="flex flex-col gap-2" aria-live="polite">
-          <p className="text-gray-400 text-xs uppercase tracking-widest">Added this session</p>
-          <ul className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col gap-2 text-sm">
+          <p className="text-stone-400 text-xs uppercase tracking-widest">Added this session</p>
+          <ul className="bg-[#1f160e]/90 border border-amber-950/80 rounded-2xl p-5 flex flex-col gap-2 text-sm">
             {added.map((line, i) => (
               <li key={added.length - i} className="flex gap-2">
                 <span className="text-green-400">✓</span>

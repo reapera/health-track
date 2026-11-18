@@ -7,8 +7,8 @@ import { rememberPasscode, savedPasscode } from "@/lib/passcode-client";
 import { deleteFood, updateFood } from "./add/actions";
 
 const inputClass =
-  "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-base text-white placeholder-gray-500 focus:outline-none focus:border-amber-400";
-const labelClass = "flex flex-col gap-1 text-gray-500 text-[11px] uppercase tracking-wide";
+  "w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-base text-white placeholder-stone-500 focus:outline-none focus:border-amber-400";
+const labelClass = "flex flex-col gap-1 text-stone-500 text-[11px] uppercase tracking-wide";
 
 export default function FoodItem({ entry }: { entry: FoodEntry }) {
   const [editing, setEditing] = useState(false);
@@ -18,13 +18,13 @@ export default function FoodItem({ entry }: { entry: FoodEntry }) {
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="group flex items-center gap-3 text-sm text-left -mx-2 px-2 py-1 rounded-lg hover:bg-gray-800/60 transition-colors"
+        className="group flex items-center gap-3 text-sm text-left -mx-2 px-2 py-1 rounded-lg hover:bg-stone-800/60 transition-colors"
         aria-label={`Edit ${entry.foodItem || entry.name || "entry"}`}
       >
         <span className="text-white flex-1">{entry.foodItem || entry.name || "—"}</span>
-        <span className="text-gray-500 text-xs">{entry.calories != null ? `${entry.calories} kcal` : ""}</span>
-        <span className="text-gray-500 text-xs w-10 text-right">{entry.protein != null ? `${entry.protein}g` : ""}</span>
-        <span className="text-gray-600 group-hover:text-amber-300 text-xs" aria-hidden>✎</span>
+        <span className="text-stone-500 text-xs">{entry.calories != null ? `${entry.calories} kcal` : ""}</span>
+        <span className="text-stone-500 text-xs w-10 text-right">{entry.protein != null ? `${entry.protein}g` : ""}</span>
+        <span className="text-stone-600 group-hover:text-amber-300 text-xs" aria-hidden>✎</span>
       </button>
     );
   }
@@ -82,7 +82,7 @@ function EditForm({ entry, onClose }: { entry: FoodEntry; onClose: () => void })
         e.preventDefault();
         run("save");
       }}
-      className="bg-gray-950 border border-amber-500/40 rounded-xl p-3 flex flex-col gap-3 my-1"
+      className="bg-[#130d08] border border-amber-500/40 rounded-xl p-3 flex flex-col gap-3 my-1"
     >
       <label className={labelClass}>
         Food
@@ -126,7 +126,7 @@ function EditForm({ entry, onClose }: { entry: FoodEntry; onClose: () => void })
         {confirmDelete ? (
           <>
             <span className="text-red-300 flex-1">Delete this entry?</span>
-            <button type="button" onClick={() => setConfirmDelete(false)} disabled={!!busy} className="text-gray-400 hover:text-white px-3 py-2">
+            <button type="button" onClick={() => setConfirmDelete(false)} disabled={!!busy} className="text-stone-400 hover:text-white px-3 py-2">
               Keep
             </button>
             <button type="button" onClick={() => run("delete")} disabled={!!busy} className="bg-red-500 text-white font-semibold rounded-lg px-4 py-2 disabled:opacity-50">
@@ -138,10 +138,10 @@ function EditForm({ entry, onClose }: { entry: FoodEntry; onClose: () => void })
             <button type="button" onClick={() => setConfirmDelete(true)} disabled={!!busy} className="text-red-400 hover:text-red-300 px-1 py-2 mr-auto">
               Delete
             </button>
-            <button type="button" onClick={onClose} disabled={!!busy} className="text-gray-400 hover:text-white px-3 py-2">
+            <button type="button" onClick={onClose} disabled={!!busy} className="text-stone-400 hover:text-white px-3 py-2">
               Cancel
             </button>
-            <button type="submit" disabled={!!busy} className="bg-amber-400 text-gray-950 font-semibold rounded-lg px-4 py-2 disabled:opacity-50">
+            <button type="submit" disabled={!!busy} className="bg-amber-400 text-stone-950 font-semibold rounded-lg px-4 py-2 disabled:opacity-50">
               {busy === "save" ? "Saving…" : "Save"}
             </button>
           </>

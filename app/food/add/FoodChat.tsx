@@ -181,14 +181,14 @@ function Chat({ initialDate }: { initialDate?: string }) {
   }
 
   const numClass =
-    "w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-base text-white text-right focus:outline-none focus:border-amber-400 disabled:opacity-60";
+    "w-full bg-stone-800 border border-stone-700 rounded-lg px-2 py-1.5 text-base text-white text-right focus:outline-none focus:border-amber-400 disabled:opacity-60";
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-4">
         {messages.length === 0 && (
-          <div className="m-auto text-center text-gray-500 text-sm px-6 flex flex-col gap-2">
-            <p className="text-gray-300 text-base">What did you eat?</p>
+          <div className="m-auto text-center text-stone-500 text-sm px-6 flex flex-col gap-2">
+            <p className="text-stone-300 text-base">What did you eat?</p>
             <p>e.g. “nasi goreng and iced tea for lunch” or “2 boiled eggs and a banana”</p>
             <p>I’ll estimate calories and protein, and you confirm before it’s saved to Notion.</p>
           </div>
@@ -196,23 +196,23 @@ function Chat({ initialDate }: { initialDate?: string }) {
 
         {messages.map((m) =>
           m.role === "user" ? (
-            <div key={m.id} className="self-end max-w-[85%] bg-amber-400 text-gray-950 rounded-2xl rounded-br-md px-4 py-2.5 text-sm whitespace-pre-wrap">
+            <div key={m.id} className="self-end max-w-[85%] bg-amber-400 text-stone-950 rounded-2xl rounded-br-md px-4 py-2.5 text-sm whitespace-pre-wrap">
               {m.text}
             </div>
           ) : (
             <div key={m.id} className="self-start w-full max-w-[95%] flex flex-col gap-2">
               {m.text && (
-                <div className="self-start bg-gray-900 border border-gray-800 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm text-gray-200 whitespace-pre-wrap">
+                <div className="self-start bg-[#1f160e]/90 border border-amber-950/80 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm text-stone-200 whitespace-pre-wrap">
                   {m.text}
                 </div>
               )}
 
               {m.items && m.items.length > 0 && (
-                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col gap-3">
+                <div className="bg-[#1f160e]/90 border border-amber-950/80 rounded-2xl p-4 flex flex-col gap-3">
                   {m.items.map((it, i) => {
                     const locked = m.status !== "pending";
                     return (
-                      <div key={i} className="flex flex-col gap-2 border-b border-gray-800 pb-3 last:border-0 last:pb-0">
+                      <div key={i} className="flex flex-col gap-2 border-b border-amber-950/80 pb-3 last:border-0 last:pb-0">
                         <div className="flex items-start gap-2">
                           <p className="flex-1 text-sm text-white">{it.foodItem}</p>
                           {!locked && (
@@ -220,7 +220,7 @@ function Chat({ initialDate }: { initialDate?: string }) {
                               type="button"
                               onClick={() => removeItem(m.id, i)}
                               aria-label={`Remove ${it.foodItem}`}
-                              className="text-gray-500 hover:text-white text-sm px-1"
+                              className="text-stone-500 hover:text-white text-sm px-1"
                             >
                               ✕
                             </button>
@@ -228,12 +228,12 @@ function Chat({ initialDate }: { initialDate?: string }) {
                         </div>
                         <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-2 items-end">
                           <label className="flex flex-col gap-1">
-                            <span className="text-gray-500 text-[11px] uppercase tracking-wide">{it.date}</span>
+                            <span className="text-stone-500 text-[11px] uppercase tracking-wide">{it.date}</span>
                             <select
                               value={it.meal}
                               disabled={locked}
                               onChange={(e) => patchItem(m.id, i, { meal: e.target.value })}
-                              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-base text-white focus:outline-none focus:border-amber-400 disabled:opacity-60"
+                              className="w-full bg-stone-800 border border-stone-700 rounded-lg px-2 py-1.5 text-base text-white focus:outline-none focus:border-amber-400 disabled:opacity-60"
                             >
                               {FOOD_MEALS.map((meal) => (
                                 <option key={meal} value={meal}>{meal}</option>
@@ -241,7 +241,7 @@ function Chat({ initialDate }: { initialDate?: string }) {
                             </select>
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="text-gray-500 text-[11px] uppercase tracking-wide">kcal</span>
+                            <span className="text-stone-500 text-[11px] uppercase tracking-wide">kcal</span>
                             <input
                               type="number"
                               inputMode="decimal"
@@ -253,7 +253,7 @@ function Chat({ initialDate }: { initialDate?: string }) {
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="text-gray-500 text-[11px] uppercase tracking-wide">Protein g</span>
+                            <span className="text-stone-500 text-[11px] uppercase tracking-wide">Protein g</span>
                             <input
                               type="number"
                               inputMode="decimal"
@@ -284,10 +284,10 @@ function Chat({ initialDate }: { initialDate?: string }) {
                   )}
 
                   <div className="flex items-center gap-3 text-sm">
-                    <span className="text-gray-400 flex-1 flex flex-col leading-tight">
+                    <span className="text-stone-400 flex-1 flex flex-col leading-tight">
                       <span>Total {m.items.reduce((s, it) => s + (Number(it.calories) || 0), 0)} kcal</span>
                       {m.dayCalories != null && (
-                        <span className="text-gray-500 text-xs">
+                        <span className="text-stone-500 text-xs">
                           Day → {(m.dayCalories + m.items.reduce((s, it) => s + (Number(it.calories) || 0), 0)).toLocaleString()} kcal
                         </span>
                       )}
@@ -297,58 +297,58 @@ function Chat({ initialDate }: { initialDate?: string }) {
                         <button
                           type="button"
                           onClick={() => patch(m.id, { status: "dismissed" })}
-                          className="text-gray-400 hover:text-white px-2 py-2"
+                          className="text-stone-400 hover:text-white px-2 py-2"
                         >
                           Discard
                         </button>
                         <button
                           type="button"
                           onClick={() => confirm(m)}
-                          className="bg-amber-400 text-gray-950 font-semibold rounded-xl px-4 py-2 hover:opacity-80 transition-opacity"
+                          className="bg-amber-400 text-stone-950 font-semibold rounded-xl px-4 py-2 hover:opacity-80 transition-opacity"
                         >
                           Log {m.items.length} {m.items.length === 1 ? "item" : "items"}
                         </button>
                       </>
                     )}
-                    {m.status === "saving" && <span className="text-gray-400">Saving…</span>}
+                    {m.status === "saving" && <span className="text-stone-400">Saving…</span>}
                     {m.status === "logged" && <span className="text-green-400">✓ Saved to Notion</span>}
-                    {m.status === "dismissed" && <span className="text-gray-500">Discarded</span>}
+                    {m.status === "dismissed" && <span className="text-stone-500">Discarded</span>}
                   </div>
                   {m.error && <p role="alert" className="text-red-400 text-sm">{m.error}</p>}
                 </div>
               )}
 
               {m.items && m.items.length === 0 && m.status === "dismissed" && (
-                <p className="text-gray-500 text-sm px-1">Discarded</p>
+                <p className="text-stone-500 text-sm px-1">Discarded</p>
               )}
             </div>
           )
         )}
 
         {busy && (
-          <div className="self-start bg-gray-900 border border-gray-800 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm text-gray-500">
+          <div className="self-start bg-[#1f160e]/90 border border-amber-950/80 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm text-stone-500">
             Estimating…
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      <div className="flex flex-col gap-2 pb-4 pt-2 border-t border-gray-900">
-        <label className="flex items-center gap-2 text-sm text-gray-400">
+      <div className="flex flex-col gap-2 pb-4 pt-2 border-t border-stone-900">
+        <label className="flex items-center gap-2 text-sm text-stone-400">
           <span>Logging for</span>
           <input
             type="date"
             value={logDate}
             max={today}
             onChange={(e) => setLogDate(e.target.value || today)}
-            className={`bg-gray-900 border rounded-lg px-2 py-1 text-base focus:outline-none focus:border-amber-400 ${
-              logDate === today ? "border-gray-800 text-gray-300" : "border-amber-400 bg-amber-400/15 text-amber-200 font-medium"
+            className={`bg-[#1f160e]/90 border rounded-lg px-2 py-1 text-base focus:outline-none focus:border-amber-400 ${
+              logDate === today ? "border-amber-950/80 text-stone-300" : "border-amber-400 bg-amber-400/15 text-amber-200 font-medium"
             }`}
           />
           {logDate === today ? (
-            <span className="text-gray-500">Today</span>
+            <span className="text-stone-500">Today</span>
           ) : (
-            <button type="button" onClick={() => setLogDate(today)} className="text-gray-500 hover:text-white underline underline-offset-2">
+            <button type="button" onClick={() => setLogDate(today)} className="text-stone-500 hover:text-white underline underline-offset-2">
               Back to today
             </button>
           )}
@@ -362,7 +362,7 @@ function Chat({ initialDate }: { initialDate?: string }) {
             placeholder="Passcode"
             aria-label="Passcode"
             autoComplete="current-password"
-            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-base text-white placeholder-gray-500 focus:outline-none focus:border-amber-400"
+            className="w-full bg-stone-800 border border-stone-700 rounded-xl px-4 py-2.5 text-base text-white placeholder-stone-500 focus:outline-none focus:border-amber-400"
           />
         )}
         <form onSubmit={send} className="flex gap-2">
@@ -374,12 +374,12 @@ function Chat({ initialDate }: { initialDate?: string }) {
             aria-label="What did you eat?"
             autoComplete="off"
             maxLength={2000}
-            className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:border-amber-400"
+            className="flex-1 min-w-0 bg-stone-800 border border-stone-700 rounded-xl px-4 py-3 text-base text-white placeholder-stone-500 focus:outline-none focus:border-amber-400"
           />
           <button
             type="submit"
             disabled={busy || !input.trim()}
-            className="bg-amber-400 text-gray-950 font-semibold rounded-xl px-5 disabled:opacity-50 transition-opacity"
+            className="bg-amber-400 text-stone-950 font-semibold rounded-xl px-5 disabled:opacity-50 transition-opacity"
           >
             Send
           </button>
