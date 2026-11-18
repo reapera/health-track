@@ -3,6 +3,7 @@
 import { rememberPasscode as storePasscode, savedPasscode } from "@/lib/passcode-client";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { FOOD_MEALS, type NewFoodEntry } from "@/lib/food";
+import type { HealthNote } from "@/lib/gemini";
 import { chatFood, logFoods } from "./actions";
 
 interface DraftItem {
@@ -19,6 +20,9 @@ interface Message {
   role: "user" | "assistant";
   text: string;
   items?: DraftItem[];
+  health?: HealthNote | null;
+  // Calories already saved that day when this proposal was made
+  dayCalories?: number | null;
   status?: "pending" | "saving" | "logged" | "dismissed";
   error?: string;
 }
@@ -54,7 +58,8 @@ function historyText(m: Message): string {
     m.status === "logged" ? "The user confirmed and these were saved." :
     m.status === "dismissed" ? "The user discarded this proposal." :
     "Awaiting confirmation; not saved yet.";
-  return [m.text, "Proposed entries:", ...lines, status].filter(Boolean).join("\n");
+  const health = m.health ? `Health note shown: ${m.health.note}` : "";
+  return [m.text, "Proposed entries:", ...lines, health, status].filter(Boolean).join("\n");
 }
 
 const noopSubscribe = () => () => {};
@@ -150,6 +155,8 @@ function Chat({ initialDate }: { initialDate?: string }) {
         role: "assistant",
         text: res.reply,
         items: res.items.length ? res.items.map(toDraft) : undefined,
+        health: res.items.length ? res.health : null,
+        dayCalories: res.dayCalories,
         status: res.items.length ? "pending" : undefined,
       },
     ]);
@@ -262,9 +269,28 @@ function Chat({ initialDate }: { initialDate?: string }) {
                     );
                   })}
 
+                  {m.health && (
+                    <div
+                      role="note"
+                      className={`flex gap-2 rounded-xl px-3 py-2.5 text-sm border ${
+                        m.health.level === "warning"
+                          ? "bg-red-500/10 border-red-500/40 text-red-200"
+                          : "bg-yellow-500/5 border-yellow-500/30 text-yellow-100"
+                      }`}
+                    >
+                      <span aria-hidden>{m.health.level === "warning" ? "⚠️" : "💡"}</span>
+                      <span>{m.health.note}</span>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-3 text-sm">
-                    <span className="text-gray-400 flex-1">
-                      Total {m.items.reduce((s, it) => s + (Number(it.calories) || 0), 0)} kcal
+                    <span className="text-gray-400 flex-1 flex flex-col leading-tight">
+                      <span>Total {m.items.reduce((s, it) => s + (Number(it.calories) || 0), 0)} kcal</span>
+                      {m.dayCalories != null && (
+                        <span className="text-gray-500 text-xs">
+                          Day → {(m.dayCalories + m.items.reduce((s, it) => s + (Number(it.calories) || 0), 0)).toLocaleString()} kcal
+                        </span>
+                      )}
                     </span>
                     {m.status === "pending" && (
                       <>
