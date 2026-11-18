@@ -1,4 +1,4 @@
-import { FOOD_MEALS, parseFoodEntry, type NewFoodEntry } from "./food";
+import { calorieTarget, FOOD_MEALS, parseFoodEntry, type NewFoodEntry } from "./food";
 
 const API = "https://generativelanguage.googleapis.com/v1beta/models";
 const TOOL_NAME = "propose_food_log";
@@ -24,11 +24,6 @@ export interface DayContext {
   calories: number;
   protein: number;
   items: string[];
-}
-
-function calorieTarget(): number | null {
-  const n = Number(process.env.DAILY_CALORIE_TARGET);
-  return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
 }
 
 function dayContextText(logDate: string, day: DayContext | null): string {

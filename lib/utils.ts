@@ -4,14 +4,22 @@ export function toDateStr(d: Date): string {
   return d.toISOString().split("T")[0];
 }
 
-export function daysAgo(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return toDateStr(d);
-}
+// The server runs in UTC; "today" should follow the user's own day.
+// Vercel reserves TZ, so the zone comes from APP_TIME_ZONE.
+const TIME_ZONE = process.env.APP_TIME_ZONE || "Asia/Jakarta";
 
 export function today(): string {
-  return toDateStr(new Date());
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(new Date());
+  } catch {
+    return toDateStr(new Date());
+  }
+}
+
+export function daysAgo(n: number): string {
+  const d = new Date(`${today()}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - n);
+  return toDateStr(d);
 }
 
 // Returns a delta string like "+1.2" or "-0.3"

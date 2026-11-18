@@ -32,7 +32,7 @@ export default function TodaySnapshot({ data }: { data: DashboardData }) {
         {(
           [
             { href: "/weight", card: <StatCard icon="⚖️" label="Weight" accent="bg-emerald-400" value={weight?.toString() ?? null} unit="kg" delta={data.deltas.weight} deltaUnit=" kg" deltaLabel={data.deltas.weightLabel ?? undefined} inverse staleDate={weightStale} /> },
-            { href: "/food",   card: <StatCard icon="🔥" label="Calories" accent="bg-amber-400" value={calories?.toString() ?? null} unit="kcal" delta={data.deltas.calories} deltaUnit=" kcal" deltaLabel={data.deltas.caloriesLabel ?? undefined} inverse staleDate={caloriesStale} /> },
+            { href: "/food",   card: <StatCard icon="🔥" label="Calories" accent="bg-orange-500" value={calories?.toString() ?? null} unit="kcal" delta={data.deltas.calories} deltaUnit=" kcal" deltaLabel={data.deltas.caloriesLabel ?? undefined} inverse staleDate={caloriesStale} /> },
             { href: "/steps",  card: <StatCard icon="👟" label="Steps" accent="bg-sky-400" value={steps?.toLocaleString() ?? null} delta={data.deltas.steps} deltaUnit=" steps" staleDate={stepsStale} /> },
             { href: "/workout",card: <StatCard icon="💪" label="Workout" accent="bg-indigo-400" value={workoutSummary(activeWorkouts) ?? "Rest day"} staleDate={workoutStale} /> },
           ] as const
