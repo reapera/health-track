@@ -1,134 +1,192 @@
 import Link from "next/link";
-import { fetchFoodLog, FoodEntry } from "@/lib/notion";
-import { today, daysAgo } from "@/lib/utils";
-import FoodItem from "./FoodItem";
+import { calorieTarget } from "@/lib/food";
+import { dayLabel, fmt } from "@/lib/dates";
+import { fetchFoodLog, type FoodEntry } from "@/lib/notion";
+import { daysAgo, today } from "@/lib/utils";
+import EntryMenu from "./EntryMenu";
 
 export const dynamic = "force-dynamic";
 
-const MEAL_ORDER = ["Breakfast", "Lunch", "Dinner", "Snack"];
+const MEAL_ORDER = ["Breakfast", "Morning", "Morning Snack", "Lunch", "Afternoon Snack", "Dinner", "Snack", "Evening Snack"];
+
+function sum(entries: FoodEntry[], key: "calories" | "protein") {
+  return entries.reduce((s, e) => s + (e[key] ?? 0), 0);
+}
 
 function groupByMeal(entries: FoodEntry[]) {
-  const map: Record<string, FoodEntry[]> = {};
+  const map = new Map<string, FoodEntry[]>();
   for (const e of entries) {
     const key = e.meal ?? "Other";
-    map[key] = [...(map[key] ?? []), e];
+    map.set(key, [...(map.get(key) ?? []), e]);
   }
-  return Object.entries(map).sort(([a], [b]) => {
-    const ai = MEAL_ORDER.indexOf(a);
-    const bi = MEAL_ORDER.indexOf(b);
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-  });
+  const rank = (m: string) => (MEAL_ORDER.includes(m) ? MEAL_ORDER.indexOf(m) : 99);
+  return [...map.entries()].sort(([a], [b]) => rank(a) - rank(b));
 }
 
-function AddLink({ date }: { date: string }) {
+function Progress({ value, target, tone }: { value: number; target: number; tone: "hero" | "row" }) {
+  const pct = Math.min(100, (value / target) * 100);
+  const over = value > target;
+  const track = tone === "hero" ? "bg-white/25" : "bg-neutral-800";
+  const bar = tone === "hero" ? (over ? "bg-yellow-200" : "bg-white") : over ? "bg-red-400" : "bg-orange-400";
   return (
-    <Link
-      href={`/food/add?date=${date}`}
-      className="text-amber-300/80 hover:text-amber-200 text-xs border border-amber-500/30 hover:border-amber-400 rounded-lg px-2 py-1 transition-colors"
-    >
-      + Add
-    </Link>
+    <div className={`h-1.5 rounded-full overflow-hidden ${track}`} role="progressbar" aria-valuemin={0} aria-valuemax={target} aria-valuenow={Math.round(value)} aria-label="Calories versus daily target">
+      <div className={`h-full rounded-full ${bar}`} style={{ width: `${pct}%` }} />
+    </div>
   );
 }
 
-function DayTotal({ entries }: { entries: FoodEntry[] }) {
-  const cal = entries.reduce((s, e) => s + (e.calories ?? 0), 0);
-  const pro = entries.reduce((s, e) => s + (e.protein ?? 0), 0);
+function EntryRow({ entry }: { entry: FoodEntry }) {
+  const name = entry.foodItem || entry.name || "—";
+  const ai = entry.note === "AI estimate";
+  const note = ai ? "" : entry.note;
   return (
-    <span className="text-stone-500 text-xs">
-      {cal > 0 ? `${cal} kcal` : "—"}
-      {pro > 0 ? ` · ${pro}g protein` : ""}
-    </span>
+    <li className="relative flex items-center gap-3 py-2.5">
+      <div className="flex-1 min-w-0">
+        <p className="text-[15px] text-white truncate">{name}</p>
+        <p className="text-xs text-neutral-500 truncate">
+          {entry.protein != null ? `${entry.protein} g protein` : "protein —"}
+          {ai && " · AI estimate"}
+          {note && ` · ${note}`}
+        </p>
+      </div>
+      <p className="text-[15px] font-medium tabular-nums text-neutral-200 whitespace-nowrap">
+        {entry.calories != null ? fmt(entry.calories) : "—"}
+        <span className="text-neutral-500 text-xs font-normal"> kcal</span>
+      </p>
+      <EntryMenu entry={entry} />
+    </li>
   );
 }
 
-function MealSection({ entries }: { entries: FoodEntry[] }) {
-  const meals = groupByMeal(entries);
-  const totalCal = entries.reduce((s, e) => s + (e.calories ?? 0), 0);
-  const totalPro = entries.reduce((s, e) => s + (e.protein ?? 0), 0);
-
+function Meals({ entries }: { entries: FoodEntry[] }) {
   return (
     <div className="flex flex-col gap-4">
-      {meals.map(([meal, items]) => (
-        <div key={meal}>
-          <p className="text-amber-200/60 text-xs uppercase tracking-wide mb-2">{meal}</p>
-          <div className="flex flex-col gap-1">
-            {items.map((item) => (
-              <FoodItem key={item.id} entry={item} />
-            ))}
+      {groupByMeal(entries).map(([meal, items]) => (
+        <section key={meal} aria-label={meal}>
+          <div className="flex items-baseline justify-between text-xs uppercase tracking-wider text-neutral-500 font-medium">
+            <h3>{meal}</h3>
+            <span className="tabular-nums">{fmt(sum(items, "calories"))} kcal</span>
           </div>
-        </div>
+          <ul className="divide-y divide-neutral-800/80">
+            {items.map((e) => (
+              <EntryRow key={e.id} entry={e} />
+            ))}
+          </ul>
+        </section>
       ))}
-      <div className="border-t border-amber-950/80 pt-3 flex gap-4 text-sm font-semibold">
-        <span className="text-amber-300">{totalCal > 0 ? `${totalCal} kcal` : "—"}</span>
-        {totalPro > 0 && <span className="text-stone-400">{totalPro}g protein</span>}
-      </div>
     </div>
   );
 }
 
 export default async function FoodPage() {
-  const entries = await fetchFoodLog(daysAgo(59));
   const td = today();
+  const target = calorieTarget();
+  const entries = await fetchFoodLog(daysAgo(59));
 
-  const todayEntries = entries.filter((e) => e.date === td);
-  const historyEntries = entries.filter((e) => e.date !== td);
+  const byDate = new Map<string, FoodEntry[]>();
+  for (const e of entries) byDate.set(e.date, [...(byDate.get(e.date) ?? []), e]);
+  const todayEntries = byDate.get(td) ?? [];
+  const pastDays = [...byDate.keys()].filter((d) => d < td).sort().reverse();
 
-  // Group history by date descending
-  const byDate: Record<string, FoodEntry[]> = {};
-  for (const e of historyEntries) {
-    byDate[e.date] = [...(byDate[e.date] ?? []), e];
-  }
-  const historyDays = Object.keys(byDate).sort().reverse();
+  const todayCal = sum(todayEntries, "calories");
+  const todayPro = sum(todayEntries, "protein");
 
   return (
-    <main className="min-h-screen bg-[#130d08] bg-[radial-gradient(ellipse_80%_45%_at_50%_0%,rgba(245,158,11,0.16),transparent)] border-t-4 border-amber-400 text-white p-6 md:p-10">
-      <div className="max-w-2xl mx-auto flex flex-col gap-8">
+    <main className="min-h-screen bg-neutral-950 text-white px-4 pt-6 pb-32 md:px-10 md:pt-10">
+      <div className="max-w-xl mx-auto flex flex-col gap-6">
+        <header className="flex items-center gap-3">
+          <Link href="/" aria-label="Dashboard" className="h-10 w-10 -ml-2 grid place-items-center rounded-full text-neutral-400 hover:text-white hover:bg-neutral-900">
+            ←
+          </Link>
+          <h1 className="text-xl font-semibold">Food</h1>
+        </header>
 
-        <div className="flex items-center gap-4">
-          <Link href="/" aria-label="Dashboard" className="shrink-0 text-stone-500 hover:text-white text-sm transition-colors">←<span className="hidden sm:inline"> Dashboard</span></Link>
-          <h1 className="text-2xl font-bold whitespace-nowrap"><span aria-hidden className="mr-2">🔥</span>Food Log</h1>
-          <Link href="/food/add" className="ml-auto shrink-0 whitespace-nowrap bg-amber-400 text-stone-950 text-sm font-semibold rounded-xl px-4 py-2 hover:opacity-80 transition-opacity">+ Add food</Link>
-        </div>
-
-        <section className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <p className="text-stone-400 text-xs uppercase tracking-widest">Today — {td}</p>
-            <AddLink date={td} />
+        {/* Today */}
+        <section className="rounded-3xl bg-gradient-to-br from-orange-500 via-orange-500 to-rose-500 p-5 shadow-lg shadow-orange-950/40">
+          <p className="text-sm font-medium text-white/80">
+            Today · {new Date(`${td}T00:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" })}
+          </p>
+          <div className="mt-2 flex items-end gap-2">
+            <span className="text-5xl font-bold tracking-tight tabular-nums">{fmt(todayCal)}</span>
+            <span className="pb-1.5 text-white/80">{target ? `/ ${fmt(target)} kcal` : "kcal"}</span>
           </div>
-          <div className="bg-[#1f160e]/90 border border-amber-500/30 rounded-2xl p-5">
-            {todayEntries.length > 0
-              ? <MealSection entries={todayEntries} />
-              : <p className="text-stone-500 text-sm">No entries logged today</p>}
-          </div>
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-stone-400 text-xs uppercase tracking-widest">History ({historyDays.length} days)</p>
-            <form action="/food/add" className="flex items-center gap-2">
-              <input type="date" name="date" required max={td} aria-label="Date to add food for" className="bg-[#1f160e]/90 border border-amber-950/80 rounded-lg px-2 py-1 text-sm text-stone-300" />
-              <button className="text-amber-300/80 hover:text-amber-200 text-xs border border-amber-500/30 hover:border-amber-400 rounded-lg px-2 py-1 transition-colors">+ Add</button>
-            </form>
-          </div>
-          {historyDays.length === 0 ? (
-            <p className="text-stone-600 text-sm">No previous entries</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {historyDays.map((date) => (
-                <div key={date} className="bg-[#1f160e]/90 border border-amber-950/80 rounded-2xl p-5">
-                  <div className="flex items-center gap-3 mb-4">
-                    <p className="font-mono text-sm text-stone-300 flex-1">{date}</p>
-                    <DayTotal entries={byDate[date]} />
-                    <AddLink date={date} />
-                  </div>
-                  <MealSection entries={byDate[date]} />
-                </div>
-              ))}
+          {target && (
+            <div className="mt-4 flex flex-col gap-1.5">
+              <Progress value={todayCal} target={target} tone="hero" />
+              <p className="text-sm text-white/85">
+                {todayCal <= target ? `${fmt(target - todayCal)} kcal left` : `${fmt(todayCal - target)} kcal over`}
+              </p>
             </div>
           )}
+          <div className="mt-4 flex gap-6 text-sm">
+            <div>
+              <p className="text-white/70">Protein</p>
+              <p className="font-semibold tabular-nums">{fmt(todayPro)} g</p>
+            </div>
+            <div>
+              <p className="text-white/70">Items</p>
+              <p className="font-semibold tabular-nums">{todayEntries.length}</p>
+            </div>
+          </div>
         </section>
 
+        {todayEntries.length > 0 ? (
+          <div className="rounded-3xl bg-neutral-900 border border-neutral-800 px-5 py-4">
+            <Meals entries={todayEntries} />
+          </div>
+        ) : (
+          <p className="text-center text-neutral-500 text-sm py-2">Nothing logged yet today.</p>
+        )}
+
+        {/* History */}
+        {pastDays.length > 0 && (
+          <section className="flex flex-col gap-2" aria-labelledby="history-heading">
+            <h2 id="history-heading" className="px-1 text-sm font-medium text-neutral-400">Earlier</h2>
+            <div className="rounded-3xl bg-neutral-900 border border-neutral-800 divide-y divide-neutral-800 overflow-hidden">
+              {pastDays.map((date) => {
+                const items = byDate.get(date)!;
+                const cal = sum(items, "calories");
+                const pro = sum(items, "protein");
+                return (
+                  <details key={date} className="group">
+                    <summary className="flex items-center gap-3 px-5 py-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-neutral-800/40">
+                      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="font-medium">{dayLabel(date, td)}</span>
+                          <span className="tabular-nums text-neutral-200">
+                            {fmt(cal)} <span className="text-neutral-500 text-xs">kcal</span>
+                          </span>
+                        </div>
+                        {target && <Progress value={cal} target={target} tone="row" />}
+                        <span className="text-xs text-neutral-500">
+                          {items.length} {items.length === 1 ? "item" : "items"} · {fmt(pro)} g protein
+                        </span>
+                      </div>
+                      <svg viewBox="0 0 20 20" className="h-4 w-4 text-neutral-500 transition-transform group-open:rotate-180" fill="currentColor" aria-hidden>
+                        <path d="M5.2 7.5a1 1 0 0 1 1.4 0L10 10.9l3.4-3.4a1 1 0 1 1 1.4 1.4l-4.1 4.1a1 1 0 0 1-1.4 0L5.2 8.9a1 1 0 0 1 0-1.4z" />
+                      </svg>
+                    </summary>
+                    <div className="px-5 pb-4">
+                      <Meals entries={items} />
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
+          </section>
+        )}
+      </div>
+
+      {/* One clear way to add food; the date is chosen on the next screen */}
+      <div className="fixed inset-x-0 bottom-0 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-6 bg-gradient-to-t from-neutral-950 via-neutral-950/90 to-transparent pointer-events-none">
+        <div className="max-w-xl mx-auto px-4 flex justify-center">
+          <Link
+            href="/food/add"
+            className="pointer-events-auto flex items-center gap-2 rounded-full bg-orange-500 hover:bg-orange-400 px-7 py-4 font-semibold shadow-lg shadow-orange-950/50 transition-colors"
+          >
+            <span aria-hidden className="text-xl leading-none">＋</span> Log food
+          </Link>
+        </div>
       </div>
     </main>
   );

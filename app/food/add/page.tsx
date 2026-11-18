@@ -1,24 +1,42 @@
-import Link from "next/link";
-import FoodChat from "./FoodChat";
+import { fetchFoodLog } from "@/lib/notion";
+import { daysAgo } from "@/lib/utils";
+import FoodChat, { type RecentFood } from "./FoodChat";
 
 // Applies to the Server Actions called from this page (the Gemini request)
 export const maxDuration = 60;
 
-export const metadata = { title: "Add Food — Health Dashboard" };
+export const metadata = { title: "Log food — Health Dashboard" };
 
-export default async function AddFoodPage({ searchParams }: { searchParams: Promise<{ date?: string | string[] }> }) {
-  const raw = (await searchParams).date;
-  const date = typeof raw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : undefined;
-  return (
-    <main className="h-dvh bg-[#130d08] bg-[radial-gradient(ellipse_80%_45%_at_50%_0%,rgba(245,158,11,0.16),transparent)] border-t-4 border-amber-400 text-white flex flex-col">
-      <div className="w-full max-w-xl mx-auto flex flex-col flex-1 min-h-0 px-4 pt-6 md:pt-10">
-        <div className="flex items-center gap-4 pb-4">
-          <Link href="/food" className="text-stone-500 hover:text-white text-sm transition-colors">← Food Log</Link>
-          <h1 className="text-2xl font-bold"><span aria-hidden className="mr-2">🔥</span>Add Food</h1>
-          <Link href={date ? `/food/add/manual?date=${date}` : "/food/add/manual"} className="ml-auto text-stone-500 hover:text-white text-sm transition-colors">Manual entry</Link>
-        </div>
-        <FoodChat initialDate={date} />
-      </div>
-    </main>
-  );
+// Foods logged most often in the last 30 days, with their latest numbers, for one-tap re-logging
+async function recentFoods(): Promise<RecentFood[]> {
+  try {
+    const entries = await fetchFoodLog(daysAgo(30));
+    const byName = new Map<string, { food: RecentFood; count: number; last: string }>();
+    for (const e of entries) {
+      const name = (e.foodItem || e.name).trim();
+      if (!name || e.calories == null) continue;
+      const key = name.toLowerCase();
+      const prev = byName.get(key);
+      const food = { foodItem: name, meal: e.meal, calories: e.calories, protein: e.protein };
+      if (!prev) byName.set(key, { food, count: 1, last: e.date });
+      else byName.set(key, { food: e.date >= prev.last ? food : prev.food, count: prev.count + 1, last: e.date > prev.last ? e.date : prev.last });
+    }
+    return [...byName.values()]
+      .sort((a, b) => b.count - a.count || b.last.localeCompare(a.last))
+      .slice(0, 8)
+      .map((x) => x.food);
+  } catch {
+    return [];
+  }
+}
+
+export default async function AddFoodPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string | string[]; manual?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const date = typeof params.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.date) ? params.date : undefined;
+  const recent = await recentFoods();
+  return <FoodChat initialDate={date} recent={recent} openManual={params.manual === "1"} />;
 }

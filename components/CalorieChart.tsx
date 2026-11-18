@@ -36,7 +36,7 @@ export default function CalorieChart({ data, activeDate, onActiveDate, onClickDa
             />
             <Bar dataKey="calories" radius={[4, 4, 0, 0]}>
               {formatted.map((entry, i) => (
-                <Cell key={i} fill="#f59e0b" opacity={!activeDate || entry.date === activeDate ? 1 : 0.25} />
+                <Cell key={i} fill="#f97316" opacity={!activeDate || entry.date === activeDate ? 1 : 0.25} />
               ))}
             </Bar>
           </BarChart>

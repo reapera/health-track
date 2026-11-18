@@ -53,6 +53,7 @@ export function parseFoodEntry(raw: Record<string, unknown>): Result {
   };
 }
 
-export function describeEntry(e: NewFoodEntry): string {
-  return `${e.meal} · ${e.foodItem} — ${e.calories} kcal${e.protein !== null ? ` · ${e.protein}g protein` : ""}`;
+export function calorieTarget(): number | null {
+  const n = Number(process.env.DAILY_CALORIE_TARGET);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
 }

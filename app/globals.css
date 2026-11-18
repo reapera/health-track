@@ -24,3 +24,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Bottom sheet open animation (see components/food/Sheet.tsx) */
+dialog.food-sheet[open] > div {
+  animation: sheet-up 180ms ease-out;
+}
+@keyframes sheet-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog.food-sheet[open] > div { animation: none; }
+}

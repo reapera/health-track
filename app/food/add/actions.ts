@@ -1,49 +1,12 @@
 "use server";
 
-import { describeEntry, parseFoodEntry, type NewFoodEntry } from "@/lib/food";
+import { parseFoodEntry, type NewFoodEntry } from "@/lib/food";
 import { estimateFood, type ChatTurn, type DayContext, type HealthNote } from "@/lib/gemini";
 import { refresh } from "next/cache";
 import { createFoodEntry, deleteFoodEntry, fetchFoodLog, updateFoodEntry } from "@/lib/notion";
 import { passcodeError } from "@/lib/passcode";
 
 // Server Actions are reachable by direct POST, so every action checks the passcode itself.
-
-export interface AddFoodState {
-  status: "idle" | "ok" | "error";
-  message: string;
-  // Echoed back on error so the form keeps what was typed
-  values?: { food: string; calories: string; protein: string; note: string };
-  // Entries added so far in this form session, newest first
-  added: string[];
-}
-
-export async function addFood(prev: AddFoodState, formData: FormData): Promise<AddFoodState> {
-  const str = (key: string) => String(formData.get(key) ?? "").trim();
-  const values = { food: str("food"), calories: str("calories"), protein: str("protein"), note: str("note") };
-  const fail = (message: string): AddFoodState => ({ status: "error", message, values, added: prev.added });
-
-  const denied = passcodeError(str("passcode"));
-  if (denied) return fail(denied);
-
-  const parsed = parseFoodEntry({
-    foodItem: values.food,
-    calories: values.calories,
-    protein: values.protein,
-    note: values.note,
-    date: str("date"),
-    meal: str("meal"),
-  });
-  if (!parsed.ok) return fail(parsed.error);
-
-  try {
-    await createFoodEntry(parsed.entry);
-  } catch (err) {
-    return fail(err instanceof Error ? err.message : "Failed to save to Notion.");
-  }
-
-  const line = describeEntry(parsed.entry);
-  return { status: "ok", message: line, added: [line, ...prev.added].slice(0, 50) };
-}
 
 export type ChatFoodResult =
   | { ok: true; reply: string; items: NewFoodEntry[]; health: HealthNote | null; dayCalories: number | null }
@@ -120,8 +83,10 @@ export async function logFoods(passcode: string, items: unknown[]): Promise<LogF
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to save to Notion.";
+    if (logged > 0) refresh();
     return { ok: false, error: logged > 0 ? `${message} (${logged} of ${entries.length} saved)` : message, logged };
   }
+  refresh();
   return { ok: true, logged };
 }
 
