@@ -14,7 +14,7 @@ export interface FoodFormValues {
 
 export const fieldClass =
   "w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3.5 py-3 text-base text-white placeholder-neutral-500 focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400";
-const labelClass = "flex flex-col gap-1.5 text-xs font-medium text-neutral-400";
+const labelClass = "min-w-0 flex flex-col gap-1.5 text-xs font-medium text-neutral-400";
 
 // Controlled entry form shared by "edit" and "add manually".
 export default function FoodForm({
@@ -93,7 +93,7 @@ export default function FoodForm({
       <div className="grid grid-cols-2 gap-3">
         <label className={labelClass}>
           Date
-          <input type="date" required value={v.date} onChange={(e) => set({ date: e.target.value })} className={fieldClass} />
+          <input type="date" required value={v.date} onChange={(e) => set({ date: e.target.value })} className={`${fieldClass} h-[50px]`} />
         </label>
         <label className={labelClass}>
           Note
