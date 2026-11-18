@@ -1,8 +1,9 @@
 "use server";
 
 import { describeEntry, parseFoodEntry, type NewFoodEntry } from "@/lib/food";
-import { estimateFood, type ChatTurn } from "@/lib/gemini";
-import { createFoodEntry } from "@/lib/notion";
+import { estimateFood, type ChatTurn, type DayContext, type HealthNote } from "@/lib/gemini";
+import { refresh } from "next/cache";
+import { createFoodEntry, deleteFoodEntry, fetchFoodLog, updateFoodEntry } from "@/lib/notion";
 import { passcodeError } from "@/lib/passcode";
 
 // Server Actions are reachable by direct POST, so every action checks the passcode itself.
@@ -45,15 +46,30 @@ export async function addFood(prev: AddFoodState, formData: FormData): Promise<A
 }
 
 export type ChatFoodResult =
-  | { ok: true; reply: string; items: NewFoodEntry[] }
+  | { ok: true; reply: string; items: NewFoodEntry[]; health: HealthNote | null; dayCalories: number | null }
   | { ok: false; error: string; auth?: boolean };
+
+async function loadDay(date: string): Promise<DayContext | null> {
+  try {
+    const entries = (await fetchFoodLog(date)).filter((e) => e.date === date);
+    return {
+      calories: Math.round(entries.reduce((sum, e) => sum + (e.calories ?? 0), 0)),
+      protein: Math.round(entries.reduce((sum, e) => sum + (e.protein ?? 0), 0)),
+      items: entries.slice(0, 30).map((e) => `${e.meal ?? "?"}: ${e.foodItem || e.name} (${e.calories ?? "?"} kcal)`),
+    };
+  } catch {
+    // The estimate still works without the day's context
+    return null;
+  }
+}
 
 // Asks the LLM for an estimate. Nothing is written to Notion here.
 export async function chatFood(
   passcode: string,
   turns: ChatTurn[],
   clientDate: string,
-  clientTime: string
+  clientTime: string,
+  logDate?: string
 ): Promise<ChatFoodResult> {
   const denied = passcodeError(String(passcode ?? ""));
   if (denied) return { ok: false, error: denied, auth: true };
@@ -68,8 +84,10 @@ export async function chatFood(
   const time = /^\d{2}:\d{2}$/.test(clientTime) ? clientTime : "12:00";
 
   try {
-    const { reply, items } = await estimateFood(clean, date, time);
-    return { ok: true, reply, items };
+    const target = typeof logDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(logDate) ? logDate : date;
+    const day = await loadDay(target);
+    const { reply, items, health } = await estimateFood(clean, date, time, target, day);
+    return { ok: true, reply, items, health, dayCalories: day ? day.calories : null };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Failed to reach Gemini." };
   }
@@ -105,4 +123,32 @@ export async function logFoods(passcode: string, items: unknown[]): Promise<LogF
     return { ok: false, error: logged > 0 ? `${message} (${logged} of ${entries.length} saved)` : message, logged };
   }
   return { ok: true, logged };
+}
+
+export type EditFoodResult = { ok: true } | { ok: false; error: string; auth?: boolean };
+
+export async function updateFood(passcode: string, id: string, raw: unknown): Promise<EditFoodResult> {
+  const denied = passcodeError(String(passcode ?? ""));
+  if (denied) return { ok: false, error: denied, auth: true };
+  const parsed = parseFoodEntry((raw ?? {}) as Record<string, unknown>);
+  if (!parsed.ok) return { ok: false, error: parsed.error };
+  try {
+    await updateFoodEntry(String(id), parsed.entry);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to update Notion." };
+  }
+  refresh();
+  return { ok: true };
+}
+
+export async function deleteFood(passcode: string, id: string): Promise<EditFoodResult> {
+  const denied = passcodeError(String(passcode ?? ""));
+  if (denied) return { ok: false, error: denied, auth: true };
+  try {
+    await deleteFoodEntry(String(id));
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to delete in Notion." };
+  }
+  refresh();
+  return { ok: true };
 }

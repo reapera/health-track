@@ -119,6 +119,7 @@ export interface WeightEntry {
 }
 
 export interface FoodEntry {
+  id: string;
   date: string;
   meal: string | null;
   name: string;
@@ -155,6 +156,7 @@ export async function fetchWeightLog(startDate: string): Promise<WeightEntry[]> 
 export async function fetchFoodLog(startDate: string): Promise<FoodEntry[]> {
   const pages = await queryDB(DB.food, startDate);
   return pages.map((p) => ({
+    id: p.id,
     date: getDate(p, "Date") ?? "",
     meal: getSelect(p, "Meal"),
     name: getText(p, "Name"),
@@ -210,25 +212,52 @@ export async function fetchLabLog(startDate: string): Promise<LabEntry[]> {
   }));
 }
 
-export async function createFoodEntry(entry: NewFoodEntry): Promise<void> {
-  const text = (content: string) => [{ type: "text", text: { content } }];
-  const properties: Record<string, unknown> = {
+function foodProperties(entry: NewFoodEntry): Record<string, unknown> {
+  const text = (content: string) => (content ? [{ type: "text", text: { content } }] : []);
+  return {
     Name: { title: text(entry.foodItem) },
     "Food Item": { rich_text: text(entry.foodItem) },
     Date: { date: { start: entry.date } },
     Meal: { select: { name: entry.meal } },
     Calories: { number: entry.calories },
+    "Protein (g)": { number: entry.protein },
+    Note: { rich_text: text(entry.note) },
   };
-  if (entry.protein !== null) properties["Protein (g)"] = { number: entry.protein };
-  if (entry.note) properties.Note = { rich_text: text(entry.note) };
+}
 
-  const res = await fetch(`${NOTION_API}/pages`, {
-    method: "POST",
+async function notionRequest(path: string, method: string, body?: unknown): Promise<Record<string, unknown>> {
+  const res = await fetch(`${NOTION_API}${path}`, {
+    method,
     headers: headers(),
-    body: JSON.stringify({ parent: { database_id: DB.food }, properties }),
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error((err as { message?: string }).message ?? `Notion API error ${res.status}`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { message?: string }).message ?? `Notion API error ${res.status}`);
+  return data as Record<string, unknown>;
+}
+
+export async function createFoodEntry(entry: NewFoodEntry): Promise<void> {
+  await notionRequest("/pages", "POST", { parent: { database_id: DB.food }, properties: foodProperties(entry) });
+}
+
+// Only pages that live in the Food Log may be edited or deleted through the app.
+async function assertFoodPage(id: string): Promise<void> {
+  if (!/^[0-9a-f-]{32,36}$/i.test(id)) throw new Error("Invalid entry id.");
+  const page = await notionRequest(`/pages/${id}`, "GET");
+  const parent = (page.parent ?? {}) as { database_id?: string };
+  const strip = (v: string) => v.replace(/-/g, "").toLowerCase();
+  if (!parent.database_id || strip(parent.database_id) !== strip(DB.food)) {
+    throw new Error("That entry is not in the Food Log.");
   }
+}
+
+export async function updateFoodEntry(id: string, entry: NewFoodEntry): Promise<void> {
+  await assertFoodPage(id);
+  await notionRequest(`/pages/${id}`, "PATCH", { properties: foodProperties(entry) });
+}
+
+// Moves the page to Notion's trash, so it can still be restored from there.
+export async function deleteFoodEntry(id: string): Promise<void> {
+  await assertFoodPage(id);
+  await notionRequest(`/pages/${id}`, "PATCH", { archived: true });
 }

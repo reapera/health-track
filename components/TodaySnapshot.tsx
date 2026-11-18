@@ -31,10 +31,10 @@ export default function TodaySnapshot({ data }: { data: DashboardData }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {(
           [
-            { href: "/weight", card: <StatCard icon="⚖️" label="Weight" value={weight?.toString() ?? null} unit="kg" delta={data.deltas.weight} deltaUnit=" kg" deltaLabel={data.deltas.weightLabel ?? undefined} inverse staleDate={weightStale} /> },
-            { href: "/food",   card: <StatCard icon="🔥" label="Calories" value={calories?.toString() ?? null} unit="kcal" delta={data.deltas.calories} deltaUnit=" kcal" deltaLabel={data.deltas.caloriesLabel ?? undefined} inverse staleDate={caloriesStale} /> },
-            { href: "/steps",  card: <StatCard icon="👟" label="Steps" value={steps?.toLocaleString() ?? null} delta={data.deltas.steps} deltaUnit=" steps" staleDate={stepsStale} /> },
-            { href: "/workout",card: <StatCard icon="💪" label="Workout" value={workoutSummary(activeWorkouts) ?? "Rest day"} staleDate={workoutStale} /> },
+            { href: "/weight", card: <StatCard icon="⚖️" label="Weight" accent="bg-emerald-400" value={weight?.toString() ?? null} unit="kg" delta={data.deltas.weight} deltaUnit=" kg" deltaLabel={data.deltas.weightLabel ?? undefined} inverse staleDate={weightStale} /> },
+            { href: "/food",   card: <StatCard icon="🔥" label="Calories" accent="bg-amber-400" value={calories?.toString() ?? null} unit="kcal" delta={data.deltas.calories} deltaUnit=" kcal" deltaLabel={data.deltas.caloriesLabel ?? undefined} inverse staleDate={caloriesStale} /> },
+            { href: "/steps",  card: <StatCard icon="👟" label="Steps" accent="bg-sky-400" value={steps?.toLocaleString() ?? null} delta={data.deltas.steps} deltaUnit=" steps" staleDate={stepsStale} /> },
+            { href: "/workout",card: <StatCard icon="💪" label="Workout" accent="bg-indigo-400" value={workoutSummary(activeWorkouts) ?? "Rest day"} staleDate={workoutStale} /> },
           ] as const
         ).map(({ href, card }) => (
           <Link key={href} href={href} className="block hover:opacity-80 transition-opacity">

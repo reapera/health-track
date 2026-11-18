@@ -1,5 +1,8 @@
 export const FOOD_MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
-export type FoodMeal = (typeof FOOD_MEALS)[number];
+// Older options still present in the Notion select; accepted when editing, not offered for new entries
+export const LEGACY_MEALS = ["Morning", "Morning Snack", "Afternoon Snack", "Evening Snack"] as const;
+export type FoodMeal = (typeof FOOD_MEALS)[number] | (typeof LEGACY_MEALS)[number];
+const ALL_MEALS: readonly string[] = [...FOOD_MEALS, ...LEGACY_MEALS];
 
 export interface NewFoodEntry {
   date: string;
@@ -30,7 +33,7 @@ export function parseFoodEntry(raw: Record<string, unknown>): Result {
   if (!foodItem) return { ok: false, error: "Enter what you ate." };
   if (foodItem.length > 200 || note.length > 500) return { ok: false, error: "Text is too long." };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) return { ok: false, error: "Invalid date." };
-  if (!FOOD_MEALS.includes(meal as FoodMeal)) return { ok: false, error: "Pick a meal." };
+  if (!ALL_MEALS.includes(meal)) return { ok: false, error: "Pick a meal." };
   if (calories === null || Number.isNaN(calories) || calories < 0 || calories > 20000) {
     return { ok: false, error: "Enter calories as a number." };
   }

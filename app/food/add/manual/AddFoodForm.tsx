@@ -1,10 +1,10 @@
 "use client";
 
+import { rememberPasscode as storePasscode, savedPasscode } from "@/lib/passcode-client";
 import { useActionState, useEffect, useState, useSyncExternalStore } from "react";
 import { addFood, type AddFoodState } from "../actions";
 
 const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
-const PASSCODE_KEY = "health-track-passcode";
 
 const initialState: AddFoodState = { status: "idle", message: "", added: [] };
 
@@ -23,28 +23,20 @@ function mealForNow(): (typeof MEALS)[number] {
 }
 
 const inputClass =
-  "w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:border-gray-400";
-const labelClass = "text-gray-400 text-xs uppercase tracking-wide";
-
-function savedPasscode(): string {
-  try {
-    return localStorage.getItem(PASSCODE_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
+  "w-full bg-stone-800 border border-stone-700 rounded-xl px-4 py-3 text-base text-white placeholder-stone-500 focus:outline-none focus:border-amber-400";
+const labelClass = "text-stone-400 text-xs uppercase tracking-wide";
 
 const noopSubscribe = () => () => {};
 
 // Defaults (date, meal, saved passcode) come from the device, so the form renders on the client only.
-export default function AddFoodForm() {
+export default function AddFoodForm({ initialDate }: { initialDate?: string }) {
   const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false);
-  return isClient ? <Form /> : null;
+  return isClient ? <Form initialDate={initialDate} /> : null;
 }
 
-function Form() {
+function Form({ initialDate }: { initialDate?: string }) {
   const [state, formAction, pending] = useActionState(addFood, initialState);
-  const [date, setDate] = useState(localDate);
+  const [date, setDate] = useState(() => initialDate ?? localDate());
   const [meal, setMeal] = useState<string>(mealForNow);
   const [passcode, setPasscode] = useState(savedPasscode);
   const added = state.added;
@@ -52,15 +44,13 @@ function Form() {
   // Remember the passcode on this device once the server has accepted it
   useEffect(() => {
     if (added.length === 0) return;
-    try {
-      localStorage.setItem(PASSCODE_KEY, passcode);
-    } catch {}
+    storePasscode(passcode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [added.length]);
 
   return (
     <div className="flex flex-col gap-6">
-      <form action={formAction} className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col gap-4">
+      <form action={formAction} className="bg-[#1f160e]/90 border border-amber-950/80 rounded-2xl p-5 flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <span className={labelClass}>Meal</span>
           <input type="hidden" name="meal" value={meal} />
@@ -72,7 +62,7 @@ function Form() {
                 onClick={() => setMeal(m)}
                 aria-pressed={meal === m}
                 className={`rounded-xl py-2.5 text-xs sm:text-sm transition-colors ${
-                  meal === m ? "bg-white text-gray-950 font-semibold" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  meal === m ? "bg-amber-400 text-stone-950 font-semibold" : "bg-stone-800 text-stone-300 hover:bg-stone-700"
                 }`}
               >
                 {m}
@@ -170,7 +160,7 @@ function Form() {
         <button
           type="submit"
           disabled={pending}
-          className="bg-white text-gray-950 font-semibold rounded-xl py-3 disabled:opacity-50 transition-opacity"
+          className="bg-amber-400 text-stone-950 font-semibold rounded-xl py-3 disabled:opacity-50 transition-opacity"
         >
           {pending ? "Saving…" : "Add to Notion"}
         </button>
@@ -178,8 +168,8 @@ function Form() {
 
       {added.length > 0 && (
         <section className="flex flex-col gap-2" aria-live="polite">
-          <p className="text-gray-400 text-xs uppercase tracking-widest">Added this session</p>
-          <ul className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col gap-2 text-sm">
+          <p className="text-stone-400 text-xs uppercase tracking-widest">Added this session</p>
+          <ul className="bg-[#1f160e]/90 border border-amber-950/80 rounded-2xl p-5 flex flex-col gap-2 text-sm">
             {added.map((line, i) => (
               <li key={added.length - i} className="flex gap-2">
                 <span className="text-green-400">✓</span>
