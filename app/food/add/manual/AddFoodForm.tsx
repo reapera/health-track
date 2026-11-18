@@ -23,7 +23,7 @@ function mealForNow(): (typeof MEALS)[number] {
 }
 
 const inputClass =
-  "w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:border-gray-400";
+  "w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:border-amber-400";
 const labelClass = "text-gray-400 text-xs uppercase tracking-wide";
 
 const noopSubscribe = () => () => {};
@@ -62,7 +62,7 @@ function Form({ initialDate }: { initialDate?: string }) {
                 onClick={() => setMeal(m)}
                 aria-pressed={meal === m}
                 className={`rounded-xl py-2.5 text-xs sm:text-sm transition-colors ${
-                  meal === m ? "bg-white text-gray-950 font-semibold" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  meal === m ? "bg-amber-400 text-gray-950 font-semibold" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                 }`}
               >
                 {m}
@@ -160,7 +160,7 @@ function Form({ initialDate }: { initialDate?: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="bg-white text-gray-950 font-semibold rounded-xl py-3 disabled:opacity-50 transition-opacity"
+          className="bg-amber-400 text-gray-950 font-semibold rounded-xl py-3 disabled:opacity-50 transition-opacity"
         >
           {pending ? "Saving…" : "Add to Notion"}
         </button>

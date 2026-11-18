@@ -6,8 +6,8 @@ export const dynamic = "force-dynamic";
 
 function WorkoutDay({ date, entries, highlight }: { date: string; entries: WorkoutEntry[]; highlight?: boolean }) {
   return (
-    <div className={`bg-gray-900 rounded-2xl p-5 border ${highlight ? "border-indigo-500/30" : "border-gray-800"}`}>
-      <p className="font-mono text-sm text-gray-400 mb-4">{date}</p>
+    <div className={`bg-gray-900 rounded-2xl p-5 border ${highlight ? "border-indigo-400/60" : "border-gray-800"}`}>
+      <p className="font-mono text-sm text-indigo-200/70 mb-4">{date}</p>
       <div className="flex flex-col gap-3">
         {entries.map((w, i) => (
           <div key={i} className="flex items-start gap-3">
@@ -40,12 +40,12 @@ export default async function WorkoutPage() {
   const historyDays = Object.keys(byDate).sort().reverse().slice(0, 20);
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-6 md:p-10">
+    <main className="min-h-screen bg-gray-950 border-t-4 border-indigo-400 text-white p-6 md:p-10">
       <div className="max-w-2xl mx-auto flex flex-col gap-8">
 
         <div className="flex items-center gap-4">
           <Link href="/" className="text-gray-500 hover:text-white text-sm transition-colors">← Dashboard</Link>
-          <h1 className="text-2xl font-bold">Workouts</h1>
+          <h1 className="text-2xl font-bold"><span aria-hidden className="mr-2">💪</span>Workouts</h1>
         </div>
 
         <section className="flex flex-col gap-2">

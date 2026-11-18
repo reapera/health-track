@@ -36,7 +36,7 @@ export default function ProteinChart({ data, activeDate, onActiveDate, onClickDa
             />
             <Bar dataKey="protein" radius={[4, 4, 0, 0]}>
               {formatted.map((entry, i) => (
-                <Cell key={i} fill="#6366f1" opacity={!activeDate || entry.date === activeDate ? 1 : 0.25} />
+                <Cell key={i} fill="#fb923c" opacity={!activeDate || entry.date === activeDate ? 1 : 0.25} />
               ))}
             </Bar>
           </BarChart>

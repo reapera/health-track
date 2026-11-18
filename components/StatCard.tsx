@@ -10,12 +10,15 @@ interface Props {
   icon: string;
   staleDate?: string | null;
   deltaLabel?: string;
+  // Tailwind background class for the section color bar, e.g. "bg-amber-400"
+  accent?: string;
 }
 
-export default function StatCard({ label, value, unit, delta, deltaUnit, inverse, icon, staleDate, deltaLabel }: Props) {
+export default function StatCard({ label, value, unit, delta, deltaUnit, inverse, icon, staleDate, deltaLabel, accent }: Props) {
   const stale = !!staleDate;
   return (
-    <div className={`bg-gray-900 rounded-2xl p-5 flex flex-col gap-2 border ${stale ? "border-yellow-500/30" : "border-gray-800"}`}>
+    <div className={`relative overflow-hidden bg-gray-900 rounded-2xl p-5 flex flex-col gap-2 border ${stale ? "border-yellow-500/30" : "border-gray-800"}`}>
+      {accent && <div aria-hidden className={`absolute inset-x-0 top-0 h-1 ${accent}`} />}
       <div className="flex items-center gap-2 text-gray-400 text-sm">
         <span className="text-xl">{icon}</span>
         {label}

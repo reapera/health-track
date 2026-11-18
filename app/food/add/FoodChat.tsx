@@ -174,7 +174,7 @@ function Chat({ initialDate }: { initialDate?: string }) {
   }
 
   const numClass =
-    "w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-base text-white text-right focus:outline-none focus:border-gray-400 disabled:opacity-60";
+    "w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-base text-white text-right focus:outline-none focus:border-amber-400 disabled:opacity-60";
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -189,7 +189,7 @@ function Chat({ initialDate }: { initialDate?: string }) {
 
         {messages.map((m) =>
           m.role === "user" ? (
-            <div key={m.id} className="self-end max-w-[85%] bg-white text-gray-950 rounded-2xl rounded-br-md px-4 py-2.5 text-sm whitespace-pre-wrap">
+            <div key={m.id} className="self-end max-w-[85%] bg-amber-400 text-gray-950 rounded-2xl rounded-br-md px-4 py-2.5 text-sm whitespace-pre-wrap">
               {m.text}
             </div>
           ) : (
@@ -226,7 +226,7 @@ function Chat({ initialDate }: { initialDate?: string }) {
                               value={it.meal}
                               disabled={locked}
                               onChange={(e) => patchItem(m.id, i, { meal: e.target.value })}
-                              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-base text-white focus:outline-none focus:border-gray-400 disabled:opacity-60"
+                              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-base text-white focus:outline-none focus:border-amber-400 disabled:opacity-60"
                             >
                               {FOOD_MEALS.map((meal) => (
                                 <option key={meal} value={meal}>{meal}</option>
@@ -278,7 +278,7 @@ function Chat({ initialDate }: { initialDate?: string }) {
                         <button
                           type="button"
                           onClick={() => confirm(m)}
-                          className="bg-white text-gray-950 font-semibold rounded-xl px-4 py-2 hover:opacity-80 transition-opacity"
+                          className="bg-amber-400 text-gray-950 font-semibold rounded-xl px-4 py-2 hover:opacity-80 transition-opacity"
                         >
                           Log {m.items.length} {m.items.length === 1 ? "item" : "items"}
                         </button>
@@ -315,8 +315,8 @@ function Chat({ initialDate }: { initialDate?: string }) {
             value={logDate}
             max={today}
             onChange={(e) => setLogDate(e.target.value || today)}
-            className={`bg-gray-900 border rounded-lg px-2 py-1 text-base focus:outline-none focus:border-gray-400 ${
-              logDate === today ? "border-gray-800 text-gray-300" : "border-amber-500/60 text-amber-300"
+            className={`bg-gray-900 border rounded-lg px-2 py-1 text-base focus:outline-none focus:border-amber-400 ${
+              logDate === today ? "border-gray-800 text-gray-300" : "border-amber-400 bg-amber-400/15 text-amber-200 font-medium"
             }`}
           />
           {logDate === today ? (
@@ -336,7 +336,7 @@ function Chat({ initialDate }: { initialDate?: string }) {
             placeholder="Passcode"
             aria-label="Passcode"
             autoComplete="current-password"
-            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-base text-white placeholder-gray-500 focus:outline-none focus:border-gray-400"
+            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-base text-white placeholder-gray-500 focus:outline-none focus:border-amber-400"
           />
         )}
         <form onSubmit={send} className="flex gap-2">
@@ -348,12 +348,12 @@ function Chat({ initialDate }: { initialDate?: string }) {
             aria-label="What did you eat?"
             autoComplete="off"
             maxLength={2000}
-            className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:border-gray-400"
+            className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-base text-white placeholder-gray-500 focus:outline-none focus:border-amber-400"
           />
           <button
             type="submit"
             disabled={busy || !input.trim()}
-            className="bg-white text-gray-950 font-semibold rounded-xl px-5 disabled:opacity-50 transition-opacity"
+            className="bg-amber-400 text-gray-950 font-semibold rounded-xl px-5 disabled:opacity-50 transition-opacity"
           >
             Send
           </button>

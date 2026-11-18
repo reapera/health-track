@@ -7,7 +7,7 @@ import { rememberPasscode, savedPasscode } from "@/lib/passcode-client";
 import { deleteFood, updateFood } from "./add/actions";
 
 const inputClass =
-  "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-base text-white placeholder-gray-500 focus:outline-none focus:border-gray-400";
+  "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-base text-white placeholder-gray-500 focus:outline-none focus:border-amber-400";
 const labelClass = "flex flex-col gap-1 text-gray-500 text-[11px] uppercase tracking-wide";
 
 export default function FoodItem({ entry }: { entry: FoodEntry }) {
@@ -24,7 +24,7 @@ export default function FoodItem({ entry }: { entry: FoodEntry }) {
         <span className="text-white flex-1">{entry.foodItem || entry.name || "—"}</span>
         <span className="text-gray-500 text-xs">{entry.calories != null ? `${entry.calories} kcal` : ""}</span>
         <span className="text-gray-500 text-xs w-10 text-right">{entry.protein != null ? `${entry.protein}g` : ""}</span>
-        <span className="text-gray-600 group-hover:text-gray-300 text-xs" aria-hidden>✎</span>
+        <span className="text-gray-600 group-hover:text-amber-300 text-xs" aria-hidden>✎</span>
       </button>
     );
   }
@@ -82,7 +82,7 @@ function EditForm({ entry, onClose }: { entry: FoodEntry; onClose: () => void })
         e.preventDefault();
         run("save");
       }}
-      className="bg-gray-950 border border-gray-700 rounded-xl p-3 flex flex-col gap-3 my-1"
+      className="bg-gray-950 border border-amber-500/40 rounded-xl p-3 flex flex-col gap-3 my-1"
     >
       <label className={labelClass}>
         Food
@@ -141,7 +141,7 @@ function EditForm({ entry, onClose }: { entry: FoodEntry; onClose: () => void })
             <button type="button" onClick={onClose} disabled={!!busy} className="text-gray-400 hover:text-white px-3 py-2">
               Cancel
             </button>
-            <button type="submit" disabled={!!busy} className="bg-white text-gray-950 font-semibold rounded-lg px-4 py-2 disabled:opacity-50">
+            <button type="submit" disabled={!!busy} className="bg-amber-400 text-gray-950 font-semibold rounded-lg px-4 py-2 disabled:opacity-50">
               {busy === "save" ? "Saving…" : "Save"}
             </button>
           </>

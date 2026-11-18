@@ -24,7 +24,7 @@ function AddLink({ date }: { date: string }) {
   return (
     <Link
       href={`/food/add?date=${date}`}
-      className="text-gray-400 hover:text-white text-xs border border-gray-700 hover:border-gray-500 rounded-lg px-2 py-1 transition-colors"
+      className="text-amber-300/80 hover:text-amber-200 text-xs border border-amber-500/30 hover:border-amber-400 rounded-lg px-2 py-1 transition-colors"
     >
       + Add
     </Link>
@@ -51,7 +51,7 @@ function MealSection({ entries }: { entries: FoodEntry[] }) {
     <div className="flex flex-col gap-4">
       {meals.map(([meal, items]) => (
         <div key={meal}>
-          <p className="text-gray-400 text-xs uppercase tracking-wide mb-2">{meal}</p>
+          <p className="text-amber-200/60 text-xs uppercase tracking-wide mb-2">{meal}</p>
           <div className="flex flex-col gap-1">
             {items.map((item) => (
               <FoodItem key={item.id} entry={item} />
@@ -60,7 +60,7 @@ function MealSection({ entries }: { entries: FoodEntry[] }) {
         </div>
       ))}
       <div className="border-t border-gray-800 pt-3 flex gap-4 text-sm font-semibold">
-        <span>{totalCal > 0 ? `${totalCal} kcal` : "—"}</span>
+        <span className="text-amber-300">{totalCal > 0 ? `${totalCal} kcal` : "—"}</span>
         {totalPro > 0 && <span className="text-gray-400">{totalPro}g protein</span>}
       </div>
     </div>
@@ -82,13 +82,13 @@ export default async function FoodPage() {
   const historyDays = Object.keys(byDate).sort().reverse();
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-6 md:p-10">
+    <main className="min-h-screen bg-gray-950 border-t-4 border-amber-400 text-white p-6 md:p-10">
       <div className="max-w-2xl mx-auto flex flex-col gap-8">
 
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-gray-500 hover:text-white text-sm transition-colors">← Dashboard</Link>
-          <h1 className="text-2xl font-bold">Food Log</h1>
-          <Link href="/food/add" className="ml-auto bg-white text-gray-950 text-sm font-semibold rounded-xl px-4 py-2 hover:opacity-80 transition-opacity">+ Add food</Link>
+          <Link href="/" aria-label="Dashboard" className="shrink-0 text-gray-500 hover:text-white text-sm transition-colors">←<span className="hidden sm:inline"> Dashboard</span></Link>
+          <h1 className="text-2xl font-bold whitespace-nowrap"><span aria-hidden className="mr-2">🔥</span>Food Log</h1>
+          <Link href="/food/add" className="ml-auto shrink-0 whitespace-nowrap bg-amber-400 text-gray-950 text-sm font-semibold rounded-xl px-4 py-2 hover:opacity-80 transition-opacity">+ Add food</Link>
         </div>
 
         <section className="flex flex-col gap-2">
@@ -96,7 +96,7 @@ export default async function FoodPage() {
             <p className="text-gray-400 text-xs uppercase tracking-widest">Today — {td}</p>
             <AddLink date={td} />
           </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <div className="bg-gray-900 border border-amber-500/30 rounded-2xl p-5">
             {todayEntries.length > 0
               ? <MealSection entries={todayEntries} />
               : <p className="text-gray-500 text-sm">No entries logged today</p>}
@@ -108,7 +108,7 @@ export default async function FoodPage() {
             <p className="text-gray-400 text-xs uppercase tracking-widest">History ({historyDays.length} days)</p>
             <form action="/food/add" className="flex items-center gap-2">
               <input type="date" name="date" required max={td} aria-label="Date to add food for" className="bg-gray-900 border border-gray-800 rounded-lg px-2 py-1 text-sm text-gray-300" />
-              <button className="text-gray-400 hover:text-white text-xs border border-gray-700 hover:border-gray-500 rounded-lg px-2 py-1 transition-colors">+ Add</button>
+              <button className="text-amber-300/80 hover:text-amber-200 text-xs border border-amber-500/30 hover:border-amber-400 rounded-lg px-2 py-1 transition-colors">+ Add</button>
             </form>
           </div>
           {historyDays.length === 0 ? (

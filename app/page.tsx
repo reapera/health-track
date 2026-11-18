@@ -132,7 +132,7 @@ export default async function DashboardPage() {
             <h1 className="text-2xl font-bold">Health Dashboard</h1>
             <p className="text-gray-500 text-sm mt-1">Synced from Notion</p>
           </div>
-          <Link href="/food/add" className="shrink-0 bg-white text-gray-950 text-sm font-semibold rounded-xl px-4 py-2 hover:opacity-80 transition-opacity">+ Add food</Link>
+          <Link href="/food/add" className="shrink-0 bg-amber-400 text-gray-950 text-sm font-semibold rounded-xl px-4 py-2 hover:opacity-80 transition-opacity">+ Add food</Link>
         </div>
 
         <TodaySnapshot data={data} />
