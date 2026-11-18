@@ -3,7 +3,7 @@ import { calorieTarget } from "@/lib/food";
 import { dayLabel, fmt } from "@/lib/dates";
 import { fetchFoodLog, type FoodEntry } from "@/lib/notion";
 import { daysAgo, today } from "@/lib/utils";
-import EntryMenu from "./EntryMenu";
+import EntryRow, { SwipeHint } from "./EntryRow";
 
 export const dynamic = "force-dynamic";
 
@@ -32,29 +32,6 @@ function Progress({ value, target, tone }: { value: number; target: number; tone
     <div className={`h-1.5 rounded-full overflow-hidden ${track}`} role="progressbar" aria-valuemin={0} aria-valuemax={target} aria-valuenow={Math.round(value)} aria-label="Calories versus daily target">
       <div className={`h-full rounded-full ${bar}`} style={{ width: `${pct}%` }} />
     </div>
-  );
-}
-
-function EntryRow({ entry }: { entry: FoodEntry }) {
-  const name = entry.foodItem || entry.name || "—";
-  const ai = entry.note === "AI estimate";
-  const note = ai ? "" : entry.note;
-  return (
-    <li className="relative flex items-center gap-3 py-2.5">
-      <div className="flex-1 min-w-0">
-        <p className="text-[15px] text-white truncate">{name}</p>
-        <p className="text-xs text-neutral-500 truncate">
-          {entry.protein != null ? `${entry.protein} g protein` : "protein —"}
-          {ai && " · AI estimate"}
-          {note && ` · ${note}`}
-        </p>
-      </div>
-      <p className="text-[15px] font-medium tabular-nums text-neutral-200 whitespace-nowrap">
-        {entry.calories != null ? fmt(entry.calories) : "—"}
-        <span className="text-neutral-500 text-xs font-normal"> kcal</span>
-      </p>
-      <EntryMenu entry={entry} />
-    </li>
   );
 }
 
@@ -131,7 +108,8 @@ export default async function FoodPage() {
         </section>
 
         {todayEntries.length > 0 ? (
-          <div className="rounded-3xl bg-neutral-900 border border-neutral-800 px-5 py-4">
+          <div className="rounded-3xl bg-neutral-900 border border-neutral-800 px-5 py-4 overflow-hidden">
+            <SwipeHint />
             <Meals entries={todayEntries} />
           </div>
         ) : (
