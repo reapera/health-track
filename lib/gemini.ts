@@ -106,6 +106,15 @@ interface Part {
   functionCall?: { name?: string; args?: { items?: unknown; health_level?: unknown; health_note?: unknown } };
 }
 
+// A day picked in the app (anything but today) always wins: the model has been seen drifting
+// back to today on later turns. On "today" the model may move entries to a date the user
+// names ("yesterday I had…"), but never into the future.
+function pickDate(modelDate: unknown, clientDate: string, logDate: string): string {
+  if (logDate !== clientDate) return logDate;
+  const d = String(modelDate ?? "");
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) && d <= clientDate ? d : logDate;
+}
+
 export async function estimateFood(
   turns: ChatTurn[],
   clientDate: string,
@@ -161,8 +170,7 @@ export async function estimateFood(
         meal: r.meal,
         calories: r.calories,
         protein: r.protein_g,
-        // Fall back to the selected date if the model returns a malformed one
-        date: /^\d{4}-\d{2}-\d{2}$/.test(String(r.date)) ? r.date : logDate,
+        date: pickDate(r.date, clientDate, logDate),
         note: "AI estimate",
       });
       if (parsed.ok) items.push(parsed.entry);

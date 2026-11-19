@@ -3,7 +3,7 @@
 import { parseFoodEntry, type NewFoodEntry } from "@/lib/food";
 import { estimateFood, type ChatTurn, type DayContext, type HealthNote } from "@/lib/gemini";
 import { refresh } from "next/cache";
-import { createFoodEntry, deleteFoodEntry, fetchFoodLog, updateFoodEntry } from "@/lib/notion";
+import { createFoodEntries, deleteFoodEntry, fetchFoodLog, updateFoodEntry } from "@/lib/notion";
 import { passcodeError } from "@/lib/passcode";
 
 // Server Actions are reachable by direct POST, so every action checks the passcode itself.
@@ -77,10 +77,7 @@ export async function logFoods(passcode: string, items: unknown[]): Promise<LogF
 
   let logged = 0;
   try {
-    for (const entry of entries) {
-      await createFoodEntry(entry);
-      logged++;
-    }
+    await createFoodEntries(entries, (n) => (logged = n));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to save to Notion.";
     if (logged > 0) refresh();
