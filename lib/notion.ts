@@ -236,12 +236,42 @@ async function notionRequest(path: string, method: string, body?: unknown): Prom
   return data as Record<string, unknown>;
 }
 
-export async function createFoodEntry(entry: NewFoodEntry): Promise<void> {
-  await notionRequest("/pages", "POST", { parent: { database_id: DB.food }, properties: foodProperties(entry) });
+const sameId = (a: string, b: string) => a.replace(/-/g, "").toLowerCase() === b.replace(/-/g, "").toLowerCase();
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Notion's database query lags a little behind page writes, so a page re-rendered right
+// after a write can miss the change. Wait (up to ~4s) until a query reflects it.
+async function waitForFoodLog(since: string, ready: (entries: FoodEntry[]) => boolean): Promise<void> {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    try {
+      if (ready(await fetchFoodLog(since))) return;
+    } catch {
+      return;
+    }
+    await sleep(attempt < 2 ? 300 : 600);
+  }
+}
+
+// Creates the pages, then waits until all of them show up in the Food Log query.
+export async function createFoodEntries(entries: NewFoodEntry[], onCreated?: (count: number) => void): Promise<void> {
+  const ids: string[] = [];
+  try {
+    for (const entry of entries) {
+      const page = await notionRequest("/pages", "POST", { parent: { database_id: DB.food }, properties: foodProperties(entry) });
+      ids.push(String(page.id));
+      onCreated?.(ids.length);
+    }
+  } finally {
+    if (ids.length > 0) {
+      const since = entries.slice(0, ids.length).map((e) => e.date).sort()[0];
+      await waitForFoodLog(since, (log) => ids.every((id) => log.some((e) => sameId(e.id, id))));
+    }
+  }
 }
 
 // Only pages that live in the Food Log may be edited or deleted through the app.
-async function assertFoodPage(id: string): Promise<void> {
+// Returns the entry's current date.
+async function assertFoodPage(id: string): Promise<string | null> {
   if (!/^[0-9a-f-]{32,36}$/i.test(id)) throw new Error("Invalid entry id.");
   const page = await notionRequest(`/pages/${id}`, "GET");
   const parent = (page.parent ?? {}) as { database_id?: string };
@@ -249,15 +279,23 @@ async function assertFoodPage(id: string): Promise<void> {
   if (!parent.database_id || strip(parent.database_id) !== strip(DB.food)) {
     throw new Error("That entry is not in the Food Log.");
   }
+  const date = (page.properties as Record<string, { date?: { start?: string } | null }> | undefined)?.Date?.date?.start;
+  return date ? date.slice(0, 10) : null;
 }
 
 export async function updateFoodEntry(id: string, entry: NewFoodEntry): Promise<void> {
-  await assertFoodPage(id);
+  const oldDate = await assertFoodPage(id);
   await notionRequest(`/pages/${id}`, "PATCH", { properties: foodProperties(entry) });
+  const since = [oldDate ?? entry.date, entry.date].sort()[0];
+  await waitForFoodLog(since, (log) => {
+    const hits = log.filter((e) => sameId(e.id, id));
+    return hits.length === 1 && hits[0].date === entry.date && hits[0].calories === entry.calories;
+  });
 }
 
 // Moves the page to Notion's trash, so it can still be restored from there.
 export async function deleteFoodEntry(id: string): Promise<void> {
-  await assertFoodPage(id);
+  const oldDate = await assertFoodPage(id);
   await notionRequest(`/pages/${id}`, "PATCH", { archived: true });
+  if (oldDate) await waitForFoodLog(oldDate, (log) => !log.some((e) => sameId(e.id, id)));
 }

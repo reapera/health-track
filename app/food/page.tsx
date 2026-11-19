@@ -7,6 +7,9 @@ import EntryRow, { SwipeHint } from "./EntryRow";
 
 export const dynamic = "force-dynamic";
 
+// Server Actions on this page wait for Notion's query to reflect each write
+export const maxDuration = 30;
+
 const MEAL_ORDER = ["Breakfast", "Morning", "Morning Snack", "Lunch", "Afternoon Snack", "Dinner", "Snack", "Evening Snack"];
 
 function sum(entries: FoodEntry[], key: "calories" | "protein") {
